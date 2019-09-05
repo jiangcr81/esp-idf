@@ -19,6 +19,7 @@
 #include "mdns.h"
 #include "protocol_examples_common.h"
 #include "sdkconfig.h"
+#include "config.h"
 
 #define MDNS_INSTANCE "esp home web server"
 
@@ -122,6 +123,12 @@ esp_err_t init_fs(void)
 
 void app_main(void)
 {
+#if (SD_CARD_EN == 1)
+	sd_card_on();
+#endif
+	//A uart read/write example without event queue;
+    xTaskCreate(echo_task, "uart_echo_task", ECHO_TASK_STACK_SIZE, NULL, ECHO_TASK_PRIO, NULL);
+
     ESP_ERROR_CHECK(nvs_flash_init());
     tcpip_adapter_init();
     ESP_ERROR_CHECK(esp_event_loop_create_default());

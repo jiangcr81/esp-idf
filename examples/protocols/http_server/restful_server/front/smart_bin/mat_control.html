@@ -1,0 +1,132 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>MAT Control</title>
+</head>
+<script>
+function led_set()
+{
+	var id_set = document.getElementById("mat_id_set_input").value;
+	
+	var led_v = 0;
+	//*
+	var led_value_1 = document.getElementById("led1").checked;
+	var led_value_2 = document.getElementById("led2").checked;
+	var led_value_3 = document.getElementById("led3").checked;
+	var led_value_4 = document.getElementById("led4").checked;
+
+	if(led_value_1 == true)
+	{
+		led_v |= 0x11;
+	}
+	else
+	{
+		led_v &= 0xFE;
+		led_v |= 0x10;
+	}
+	
+	if(led_value_2 == true)
+	{
+		led_v |= 0x22;
+	}
+	else
+	{
+		led_v &= 0xFD;
+		led_v |= 0x20;
+	}
+	
+	if(led_value_3 == true)
+	{
+		led_v |= 0x44;
+	}
+	else
+	{
+		led_v &= 0xFB;
+		led_v |= 0x40;
+	}
+	
+	if(led_value_4 == true)
+	{
+		led_v |= 0x88;
+	}
+	else
+	{
+		led_v &= 0xF7;
+		led_v |= 0x80;
+	}
+//	alert(led_v);
+	//*/
+	if (id_set.length == 0)
+	{
+		alert("Please input ID first!");
+	}
+	else
+	{
+		
+		var param = "mat_id="+id_set+"&led_value="+led_v;
+		var xhttp = new XMLHttpRequest();
+		xhttp.onreadystatechange = function() {
+			if (xhttp.readyState == 4) {
+                if (xhttp.status == 200) {
+                    document.open();
+                    document.write(xhttp.responseText);
+                    document.close();
+                } else if (xhttp.status == 0) {
+                    alert("Server closed the connection abruptly!");
+                    location.reload()
+                } else {
+                    alert(xhttp.status + " Error!\n" + xhttp.responseText);
+                    location.reload()
+                }
+            }
+		}
+		
+		xhttp.open("POST", "mat_led/control", true);
+        xhttp.send(param);
+	}
+}
+</script>
+<body>
+<h1 align="center">Welcome to MAT Control Page</h1>
+<p>
+  <label>Mat ID:
+  <input type="text" id="mat_id_set_input" size="4" maxlength="4" />
+  <!--<button type="button" onclick="led_set()">Set</button>-->
+  </label>
+</p>
+<table width="100%" border="1">
+  <tr>
+    <td><p>1</p>
+    <p>
+      <label>
+      <input id="led1" type="checkbox" name="checkbox" value="1" onclick="led_set()" />
+      Led      </label>
+      
+    </p></td>
+    <td><p>2</p>
+    <p>
+      <label>
+      <input id="led2" type="checkbox" name="checkbox" value="2" onclick="led_set()"/>
+      Led
+      </label>
+    </p></td>
+	<td><p>3</p>
+    <p>
+      <label>
+      <input id="led3" type="checkbox" name="checkbox" value="3" onclick="led_set()"/>
+      Led
+      </label>
+    </p></td>
+	<td><p>4</p>
+    <p>
+      <label>
+      <input id="led4" type="checkbox" name="checkbox" value="4" onclick="led_set()"/>
+      Led
+      </label>
+    </p></td>
+  </tr>
+</table>
+<p> </p>
+</body>
+</html>

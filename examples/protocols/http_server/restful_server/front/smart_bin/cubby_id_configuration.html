@@ -1,0 +1,67 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>MAT ID Configuration</title>
+</head>
+<script>
+function set_id()
+{
+	var id_set = document.getElementById("mat_id_set_input").value;
+	
+	if (id_set.length == 0)
+	{
+		alert("Please input ID first!");
+	}
+	else
+	{
+		document.getElementById("mat_id_set_input").disabled = true;
+		document.getElementById("mat_id_set").disabled = true;
+		
+		var param = "mat_id="+id_set;
+		var xhttp = new XMLHttpRequest();
+		xhttp.onreadystatechange = function() {
+			if (xhttp.readyState == 4) {
+                if (xhttp.status == 200) {
+                    document.open();
+                    document.write(xhttp.responseText);
+                    document.close();
+                } else if (xhttp.status == 0) {
+                    alert("Server closed the connection abruptly!");
+                    location.reload()
+                } else {
+                    alert(xhttp.status + " Error!\n" + xhttp.responseText);
+                    location.reload()
+                }
+            }
+		}
+		
+		xhttp.open("POST", "mat_id/set", true);
+        xhttp.send(param);
+	}
+}
+</script>
+<body>
+<p>Welcome to MAT ID configuration page</p>
+<p>1. Connect One PCBA to the computer throught Wifi Module. </p>
+<p><!--<img src="images/cubby_board.JPG" width="1136" height="907" /> --></p>
+<p>2. Input ID number:</p>
+<p>
+  <label>MAT ID:  </label>
+  <label>
+  <input id="mat_id_set_input" type="text" />
+  <button id="mat_id_set" type="button" onclick="set_id()">Set</button>
+  </label>
+</p>
+<p>&nbsp;</p>
+<p>3. Read ID number:</p>
+<p>
+  <label>
+  <input type="submit" name="Submit_get_id" value="Get" />
+  </label>
+  <label>
+  <input type="text" name="textfield_id_get" />
+  </label>
+</p>
+</body>
+</html>

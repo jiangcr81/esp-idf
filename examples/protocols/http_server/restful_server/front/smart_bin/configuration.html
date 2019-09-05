@@ -1,0 +1,172 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Smart Bin Configuration</title>
+<style type="text/css">
+<!--
+.STYLE1 {color: #FF0000}
+.style_select {
+	width: 200px;
+}
+-->
+</style>
+</head>
+
+<body>
+<h1 align="center"> Welcome to Smart Bin Configuration Page </h1>
+
+<table width="100%" border="1">
+  <tr>
+    <td colspan="2"><h2>Location Information </h2></td>
+  </tr>
+  <tr>
+    <td><strong>UUID</strong></td>
+    <td>
+	<label><input name="textfield" type="text" id="uuid" size="100" maxlength="100" /> 
+	<span class="STYLE1">*</span> UUID</label>	</td>
+  </tr>
+  <tr>
+    <td><strong>CustomerNum</strong></td>
+    <td><label><input name="textfield" type="text" id="CustomerNum" size="50" maxlength="50" /> 
+        <span class="STYLE1">*</span> CustomerNum</label></td>
+  </tr>
+  <tr>
+    <td><strong>Description</strong></td>
+    <td><label><input name="textfield" type="text" id="Description" size="100" maxlength="100" /> 
+	Description</label></td>
+  </tr>
+  <tr>
+    <td colspan="2"><h2>Bin Information </h2></td>
+  </tr>
+  <tr>
+    <td><strong>LocationID</strong></td>
+    <td><label><input name="textfield" type="text" id="LocationID" size="60" maxlength="60" /> 
+        <span class="STYLE1">*</span> LocationID</label></td>
+  </tr>
+  <tr>
+    <td><strong>BinName</strong></td>
+    <td><label><input name="textfield" type="text" id="BinName" size="50" maxlength="50" /> 
+        <span class="STYLE1">*</span> BinName</label></td>
+  </tr>
+  <tr>
+    <td><strong>Type_ID</strong></td>
+    <td><label>
+      <select name="select" class="style_select" >
+        <option value="40">40 WHOLE BIN</option>
+        <option value="24">24 CUP</option>
+      </select>
+    </label> <span class="STYLE1">*</span> Select one type </td>
+  </tr>
+  <tr>
+    <td><strong>UserID</strong></td>
+    <td><label><input name="textfield" type="text" id="UserID" size="50" maxlength="50" /> 
+        <span class="STYLE1">*</span> UserID</label></td>
+  </tr>
+  <tr>
+    <td><strong>Password</strong></td>
+    <td><label><input name="textfield" type="password" id="Password" size="100" maxlength="100" /> 
+        <span class="STYLE1">*</span> Password</label></td>
+  </tr>
+  <tr>
+    <td><strong>Endpoint</strong></td>
+    <td><label><input name="textfield" type="text" id="Endpoint" size="100" maxlength="100" /> 
+        <span class="STYLE1">*</span> The cloud server url address. </label></td>
+  </tr>
+  <tr>
+    <td><strong>Secret</strong></td>
+    <td><label><input name="textfield" type="text" id="Secret" size="100" maxlength="100" /> 
+        <span class="STYLE1">*</span> The certification between server and bin. </label></td>
+  </tr>
+  <tr>
+    <td colspan="2"><h2>Network Information </h2></td>
+  </tr>
+  <tr>
+    <td><strong>SSID</strong></td>
+    <td><label><input name="textfield" type="text" id="NSSID" size="50" maxlength="50" /> 
+        <span class="STYLE1">*</span> Wifi SSID to connect</label></td>
+  </tr>
+
+  <tr>
+    <td><strong>Password</strong></td>
+    <td><label><input name="textfield" type="password" id="NPassword" size="100" maxlength="100" /> 
+        <span class="STYLE1">*</span> Password of the Wifi</label></td>
+  </tr>
+  <tr>
+    <td><strong>UserId</strong></td>
+    <td><label><input name="textfield" type="text" id="NUserId" size="50" maxlength="50" /></label> 
+      UserId of the Wifi(optional)</td>
+  </tr>
+  <tr>
+    <td colspan="2"><input name="Submit" type="submit" id="Submit" value="Submit" />
+    <input name="Cancel" type="submit" id="Cancel" value="Cancel" /></td>
+  </tr>
+</table>
+Cubby Definition
+
+<table width="100%" border="1">
+  <tr>
+    <td><input type="text" name="textfield2" />
+    Location</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+</table>
+<p>&nbsp;</p>
+</body>
+</html>

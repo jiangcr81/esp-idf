@@ -42,3 +42,8 @@ If you're looking for a more bare-bones project to start from, try [esp-idf-temp
 If you have a new example you think we'd like, please consider sending it to us as a Pull Request.
 
 In the ESP-IDF documentation, you can find a "Creating Examples" page which lays out the steps to creating a top quality example.
+
+编译时出错：
+unknown encoding: cp65001异常
+解决方法：
+chcp 936
