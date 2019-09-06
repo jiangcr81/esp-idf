@@ -166,6 +166,7 @@ static esp_err_t rest_common_get_handler(httpd_req_t *req)
     return ESP_OK;
 }
 
+#if 1
 /* Simple handler for light brightness control */
 static esp_err_t light_brightness_post_handler(httpd_req_t *req)
 {
@@ -221,6 +222,77 @@ static esp_err_t temperature_data_get_handler(httpd_req_t *req)
     httpd_resp_set_type(req, "application/json");
     cJSON *root = cJSON_CreateObject();
     cJSON_AddNumberToObject(root, "raw", esp_random() % 20);
+    const char *sys_info = cJSON_Print(root);
+    httpd_resp_sendstr(req, sys_info);
+    free((void *)sys_info);
+    cJSON_Delete(root);
+    return ESP_OK;
+}
+#endif
+
+/* Simple handler for getting weight sensor data */
+static esp_err_t mat_weight_data_get_handler(httpd_req_t *req)
+{
+	int total_len = req->content_len;
+	int cur_len = 0;
+	uint8 param_len=0, mat_id=0, idh=0, idl=0;
+	uint32 adc_show[4];
+	char *params = NULL;
+	
+	char *buf = ((rest_server_context_t *)(req->user_ctx))->scratch;
+//	ESP_LOGI(REST_TAG, "uri[%s],\r\n", req->uri);
+	params = (char *)strchr(req->uri, '?');
+	if (params != NULL) {
+		/* URI contains parameters. NULL-terminate the base URI */
+		*params = '\0';
+		params++;
+    }
+
+	int received = 0;
+	if (total_len >= SCRATCH_BUFSIZE) {
+		/* Respond with 500 Internal Server Error */
+		httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "content too long");
+		return ESP_FAIL;
+	}
+	while (cur_len < total_len) {
+		received = httpd_req_recv(req, buf + cur_len, total_len);
+		if (received <= 0) {
+			/* Respond with 500 Internal Server Error */
+			httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to post control value");
+			return ESP_FAIL;
+		}
+		cur_len += received;
+	}
+	buf[total_len] = '\0';
+
+//	ESP_LOGI(REST_TAG, "buf[%s],cur_len=%d\r\n", buf, cur_len);
+
+	param_len = parse_uri_parameters(params);
+
+	for(int i=0; i<param_len; i++)
+	{
+	//	ESP_LOGI(REST_TAG, "http_cgi_params[%d]=%s,http_cgi_param_vals[%d]=%s\r\n",i,http_cgi_params[i],i,http_cgi_param_vals[i]);
+
+		if(strncmp(http_cgi_params[i],"mat_id", 6) == 0)
+		{
+			mat_id = atoi(http_cgi_param_vals[i]);
+			idh = mat_id/100;
+			idl = mat_id - (idh*100);
+		}
+	}
+//	ESP_LOGI(REST_TAG, "mat_id=%d, idh=%d, idl=%d", mat_id, idh, idl);
+
+	adc_show[0] = api_get_adc_raw((((uint16)idh<<8)|idl), 0);
+	adc_show[1] = api_get_adc_raw((((uint16)idh<<8)|idl), 1);
+	adc_show[2] = api_get_adc_raw((((uint16)idh<<8)|idl), 2);
+	adc_show[3] = api_get_adc_raw((((uint16)idh<<8)|idl), 3);
+
+    httpd_resp_set_type(req, "application/json");
+    cJSON *root = cJSON_CreateObject();
+    cJSON_AddNumberToObject(root, "cubby1", adc_show[0]);
+    cJSON_AddNumberToObject(root, "cubby2", adc_show[1]);
+    cJSON_AddNumberToObject(root, "cubby3", adc_show[2]);
+    cJSON_AddNumberToObject(root, "cubby4", adc_show[3]);
     const char *sys_info = cJSON_Print(root);
     httpd_resp_sendstr(req, sys_info);
     free((void *)sys_info);
@@ -312,7 +384,7 @@ static esp_err_t cubby_led_set_handler(httpd_req_t *req)
 
 	/* Redirect onto root to see the updated file list */
 	httpd_resp_set_status(req, HTTPD_200);
-	httpd_resp_set_hdr(req, "Location", "self.reload()");
+//	httpd_resp_set_hdr(req, "Location", "self.reload()");
 //	httpd_resp_sendstr(req, "Set Cubby LED successfully");
 
     return ESP_OK;
@@ -332,7 +404,7 @@ esp_err_t start_rest_server(const char *base_path)
 
     ESP_LOGI(REST_TAG, "Starting HTTP Server");
     REST_CHECK(httpd_start(&server, &config) == ESP_OK, "Start server failed", err_start);
-
+#if 1
     /* URI handler for fetching system info */
     httpd_uri_t system_info_get_uri = {
         .uri = "/api/v1/system/info",
@@ -359,16 +431,25 @@ esp_err_t start_rest_server(const char *base_path)
         .user_ctx = rest_context
     };
     httpd_register_uri_handler(server, &light_brightness_post_uri);
-
+#endif
+	/* URI handler for fetching weight sensor data */
+    httpd_uri_t mat_weight_data_get_uri = {
+        .uri		= "/mat/get_weight",
+        .method		= HTTP_GET,
+        .handler	= mat_weight_data_get_handler,
+        .user_ctx	= rest_context
+    };
+    httpd_register_uri_handler(server, &mat_weight_data_get_uri);
+	
     /* URI handler for getting web server files */
     httpd_uri_t common_get_uri = {
-        .uri = "/*",
-        .method = HTTP_GET,
-        .handler = rest_common_get_handler,
-        .user_ctx = rest_context
+        .uri		= "/*",
+        .method		= HTTP_GET,
+        .handler	= rest_common_get_handler,
+        .user_ctx	= rest_context
     };
     httpd_register_uri_handler(server, &common_get_uri);
-
+	
 	/* URI handler for set mat id */
     httpd_uri_t mat_id_set = {
         .uri       = "/mat_id/set",
@@ -386,6 +467,7 @@ esp_err_t start_rest_server(const char *base_path)
         .user_ctx  = rest_context
     };
     httpd_register_uri_handler(server, &cubby_led_set);
+
 
     return ESP_OK;
 err_start:

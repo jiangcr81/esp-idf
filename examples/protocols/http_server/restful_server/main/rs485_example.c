@@ -32,7 +32,7 @@
 
 static const char *TAG = "RS485_ECHO_APP";
 
-ST_CUBBY_BIN	m_bin;
+static ST_CUBBY_BIN	m_bin;
 
 uint8 calc_str_sum(uint8 * pstr, uint8 len)
 {
@@ -156,7 +156,37 @@ void rs485_tx_package(uint8 type)
 	uart_write_bytes(uart_num, (char *)tx_buf, tx_len);
 }
 
+void rs485_cmd_get_adc(uint8 idh, uint8 idl)
+{
+	int uart_num = ECHO_UART_PORT;
+	uint8 tx_len = 0x10;
+	uint16 tx_sum = 0;
+	uint8_t* tx_buf = (uint8_t*) malloc(tx_len+1);
+	memset(tx_buf, 0x00, tx_len+1);
+	
+	tx_buf[0] = PTL_PREFIX;
+	tx_buf[1] = tx_len;
+	tx_buf[2] = 0x01;	//type
+	tx_buf[3] = 0x00;	//host address h
+	tx_buf[4] = 0x00;	//host address l
+	tx_buf[5] = idh;	//device address h
+	tx_buf[6] = idl;	//device address l
+	tx_buf[7] = 0x00;	//reserved
+	tx_buf[8] = 0x00;	//reserved
+	tx_buf[9] = 0x00;	//reserved
+	tx_buf[10] = 0x00;	//reserved
+	tx_buf[11] = PTL_CMD_WEIGHT;	//Get Weight
+	tx_buf[12] = 0x00;	//cmd type
+	tx_buf[13] = 0x00;	//payload length
+	
+	tx_sum = if_data_ckeck(tx_buf, tx_len-2);
+	tx_buf[tx_len-2] = (tx_sum>>8)&0xFF;
+	tx_buf[tx_len-1] = (tx_sum)&0xFF;
+	
+	uart_write_bytes(uart_num, (char *)tx_buf, tx_len);
+}
 /*
+ *
  */
 void rs485_cmd_led(uint8 idh, uint8 idl, uint8 led_value)
 {
@@ -187,6 +217,111 @@ void rs485_cmd_led(uint8 idh, uint8 idl, uint8 led_value)
 	tx_buf[tx_len-1] = (tx_sum)&0xFF;
 	
 	uart_write_bytes(uart_num, (char *)tx_buf, tx_len);
+}
+
+uint8 find_mat_index(uint16 mat_id)
+{
+	uint8 u8_ret = 0xFF, i;
+	for(i = 0; i<MAT_CNT_MAX; i++)
+	{
+	//	ESP_LOGI(TAG, "m_mat_id[%d]=0x%.8X, param mat_id=0x%.8X", i, m_bin.m_mat[i].u16_mat_id, mat_id);
+		if(m_bin.m_mat[i].u16_mat_id == mat_id)
+		{
+		//	ESP_LOGI(TAG, "found mat.");
+			u8_ret = i;
+			break;
+		}
+	}
+//	ESP_LOGI(TAG, "mat not found.");
+	return u8_ret;
+}
+
+uint32 u8_3_uint32(uint8 u8h, uint8 u8m, uint8 u8l)
+{
+	return (((uint16)u8h<<16)|((uint16)u8m<<8)|u8l);
+}
+
+void init_m_bin(void)
+{
+	uint8 i = 0, j = 0;
+	for(i = 0; i<MAT_CNT_MAX; i++)
+	{
+		m_bin.m_mat[i].u16_mat_id = 0;
+		for(j = 0; j < 4; j++)
+		{
+			m_bin.m_mat[i].m_cubby[j].u32_adc_raw = 0;
+			m_bin.m_mat[i].m_cubby[j].u32_adc_peeling = 0;
+			m_bin.m_mat[i].m_cubby[j].u8_led_status = 0;
+		}
+	}
+
+	m_bin.m_mat[1].u16_mat_id = 0x0201;
+}
+
+uint32 api_get_adc_raw(uint16 mat_id, uint8 cubby_index)
+{
+	uint32 u32_ret = 0;
+	uint8 u8_mat_index = 0;
+	
+	if(cubby_index > 3)
+		return 0;
+	
+	u8_mat_index = find_mat_index(mat_id);
+	if(u8_mat_index < MAT_CNT_MAX)
+	{
+		u32_ret = m_bin.m_mat[u8_mat_index].m_cubby[cubby_index].u32_adc_raw;
+	}
+	return u32_ret>>5;
+}
+
+/*
+0    1    2    3    4    5    6    7    8    9    10   11   12   13   14   15   16   17   18   19   20   21   22   23   24   25   26   27
+0x55 0x1C 0x01 0x02 0x01 0x00 0x00 0x00 0x00 0x00 0x00 0x03 0x01 0x0C 0x80 0x43 0x70 0x7E 0xE6 0xB8 0x7F 0xF2 0xC8 0x81 0x3A 0x58 0x07 0x20
+
+
+*/
+void rs485_parse_rx(uint8 * psrc, uint8 len)
+{
+	uint16 tx_sum_raw = 0;
+	uint16 tx_sum = 0;
+	uint16 u16_mat_id = 0;
+	uint8 u8_mat_index = 0;
+	tx_sum_raw = ((uint16)psrc[len-2]<<8|psrc[len-1]);
+	tx_sum = if_data_ckeck(psrc, len-2);
+	if(tx_sum_raw == tx_sum)
+	{
+	//	ESP_LOGI(TAG, "sum ok!\r\n");
+		if(psrc[0] == 0x55)
+		{
+		//	ESP_LOGI(TAG, "head ok!\r\n");
+			if(psrc[1] == len)
+			{
+			//	ESP_LOGI(TAG, "length ok!\r\n");
+				if(psrc[2] == 0x01)
+				{
+					u16_mat_id = ((uint16)psrc[3]<<8)|psrc[4];
+				//	ESP_LOGI(TAG, "u16_mat_id = 0x%.4X", u16_mat_id);
+					u8_mat_index = find_mat_index(u16_mat_id);
+					if(u8_mat_index < MAT_CNT_MAX)
+					{
+
+						if(psrc[11] == PTL_CMD_WEIGHT)
+						{
+							m_bin.m_mat[u8_mat_index].m_cubby[0].u32_adc_raw = u8_3_uint32(psrc[14], psrc[15], psrc[16]);
+							m_bin.m_mat[u8_mat_index].m_cubby[1].u32_adc_raw = u8_3_uint32(psrc[17], psrc[18], psrc[19]);
+							m_bin.m_mat[u8_mat_index].m_cubby[2].u32_adc_raw = u8_3_uint32(psrc[20], psrc[21], psrc[22]);
+							m_bin.m_mat[u8_mat_index].m_cubby[3].u32_adc_raw = u8_3_uint32(psrc[23], psrc[24], psrc[25]);
+						//	ESP_LOGI(TAG,"cubby1:%d", m_bin.m_mat[u8_mat_index].m_cubby[0].u32_adc_raw);
+						//	ESP_LOGI(TAG,"cubby2:%d", m_bin.m_mat[u8_mat_index].m_cubby[1].u32_adc_raw);
+						//	ESP_LOGI(TAG,"cubby3:%d", m_bin.m_mat[u8_mat_index].m_cubby[2].u32_adc_raw);
+						//	ESP_LOGI(TAG,"cubby4:%d", m_bin.m_mat[u8_mat_index].m_cubby[3].u32_adc_raw);
+						//	ESP_LOGI(TAG, "store adc raw data ok!\r\n");
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 // An example of echo test with hardware flow control on UART
@@ -226,6 +361,7 @@ void echo_task(void *arg)
 
     ESP_LOGI(TAG, "UART start recieve loop.\r\n");
 //	uart_write_bytes(uart_num, "Start RS485 UART test.\r\n", 24);
+	init_m_bin();
 
     while(1) {
         //Read data from UART
@@ -234,10 +370,11 @@ void echo_task(void *arg)
 		//*
         //Write data back to UART
         if (len > 0) {
+			rs485_parse_rx(data, len);
         //	uart_write_bytes(uart_num, "\r\n", 2);
         //	char prefix[] = "RS485 Received: [";
         //	uart_write_bytes(uart_num, prefix, (sizeof(prefix) - 1));
-            
+            /*
             ESP_LOGI(TAG, "Received %u bytes:", len);
             printf("[ ");
             for (int i = 0; i < len; i++) {
@@ -249,11 +386,13 @@ void echo_task(void *arg)
                 }
             }
             printf("] \n");
+            //*/
         //	uart_write_bytes(uart_num, "]\r\n", 3);
         } else {
             // Echo a "." to show we are alive while we wait for input
             //uart_write_bytes(uart_num, ".", 1);
 		//	rs485_tx_package(2);
+			rs485_cmd_get_adc(0x02, 0x01);
 
 		//	rs485_cmd_led(2, 1, 3, 1);
         }
