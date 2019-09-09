@@ -390,7 +390,9 @@ static esp_err_t cubby_led_set_handler(httpd_req_t *req)
     return ESP_OK;
 }
 
-
+/*
+ * http://192.168.4.1/mat/get_weight?mat_id=0201
+ */
 esp_err_t start_rest_server(const char *base_path)
 {
     REST_CHECK(base_path, "wrong base path", err);

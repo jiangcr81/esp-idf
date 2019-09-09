@@ -126,6 +126,7 @@ void app_main(void)
 #if (SD_CARD_EN == 1)
 	sd_card_on();
 #endif
+
 	//A uart read/write example without event queue;
     xTaskCreate(echo_task, "uart_echo_task", ECHO_TASK_STACK_SIZE, NULL, ECHO_TASK_PRIO, NULL);
 
@@ -133,8 +134,13 @@ void app_main(void)
     tcpip_adapter_init();
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     initialise_mdns();
+	
+    ESP_LOGI(TAG, "ESP_WIFI_MODE_AP");
+	wifi_init_softap();
 
-    ESP_ERROR_CHECK(example_connect());
-    ESP_ERROR_CHECK(init_fs());
-    ESP_ERROR_CHECK(start_rest_server(CONFIG_EXAMPLE_WEB_MOUNT_POINT));
+//	ESP_ERROR_CHECK(example_connect());
+	ESP_ERROR_CHECK(init_fs());
+	ESP_ERROR_CHECK(start_rest_server(CONFIG_EXAMPLE_WEB_MOUNT_POINT));
+	
+
 }
