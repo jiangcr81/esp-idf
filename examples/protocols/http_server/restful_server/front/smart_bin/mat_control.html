@@ -82,9 +82,38 @@ function led_set()
             }
 		}
 		
-		xhttp.open("POST", "mat_led/control", true);
+		xhttp.open("POST", "mat/set_led", true);
         xhttp.send(param);
 	}
+}
+
+function lcd_show()
+{
+	var mat_id = document.getElementById("mat_id_set_input").value;
+	var lcd_num = document.getElementById("lcd_num").value;
+	var lcd_str = document.getElementById("lcd_str").value;
+	
+	var param = "mat_id="+mat_id+"&lcd_type=161"+"&lcd_num="+lcd_num+"&lcd_str="+lcd_str;
+	var xhttp = new XMLHttpRequest();
+	xhttp.onreadystatechange = function() {
+		if (xhttp.readyState == 4) {
+			if (xhttp.status == 200) {
+				document.open();
+				document.write(xhttp.responseText);
+				document.close();
+			} else if (xhttp.status == 0) {
+				alert("Server closed the connection abruptly!");
+				location.reload()
+			} else {
+				alert(xhttp.status + " Error!\n" + xhttp.responseText);
+				location.reload()
+			}
+		}
+	}
+	
+	xhttp.open("POST", "mat/set_lcd", true);
+	xhttp.send(param);
+
 }
 </script>
 <body>
@@ -102,8 +131,10 @@ function led_set()
       <label>
       <input id="led1" type="checkbox" name="checkbox" value="1" onclick="led_set()" />
       Led      </label>
-      
-    </p></td>
+    </p>
+    
+    
+    </td>
     <td><p>2</p>
     <p>
       <label>
@@ -127,6 +158,22 @@ function led_set()
     </p></td>
   </tr>
 </table>
-<p> </p>
+
+<p>
+<select id="lcd_num" name="select" class="style_select" >
+  <option value="1">LCD 1</option>
+  <option value="2">LCD 2</option>
+  <option value="3">LCD 3</option>
+  <option value="4">LCD 4</option>
+  <option value="5">LCD 5</option>
+  <option value="6">LCD 6</option>
+  <option value="7">LCD 7</option>
+  <option value="8">LCD 8</option>
+</select>
+</p>
+<p>PartNumber:
+      <input name="textfield" type="text" id="lcd_str" size="30" maxlength="30" />
+</p>
+<p> <button id="mat_id_set" type="button" onclick="lcd_show()">Lcd Show Part Number</button> </p>
 </body>
 </html>

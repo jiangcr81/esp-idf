@@ -8,6 +8,7 @@
 function set_id()
 {
 	var id_set = document.getElementById("mat_id_set_input").value;
+	var mcu_type = document.getElementById("mcu_type").value;
 	
 	if (id_set.length == 0)
 	{
@@ -18,7 +19,7 @@ function set_id()
 		document.getElementById("mat_id_set_input").disabled = true;
 		document.getElementById("mat_id_set").disabled = true;
 		
-		var param = "mat_id="+id_set;
+		var param = "mat_id="+id_set+"&mcu_type="+mcu_type;
 		var xhttp = new XMLHttpRequest();
 		xhttp.onreadystatechange = function() {
 			if (xhttp.readyState == 4) {
@@ -44,7 +45,9 @@ function set_id()
 function get_id()
 {
 	document.getElementById("mat_id_get").disabled = true;
+	var mcu_type = document.getElementById("mcu_type").value;
 	
+	var param = "mcu_type="+mcu_type;
 	var xhttp = new XMLHttpRequest();
 	xhttp.onreadystatechange = function() {
 		if (xhttp.readyState == 4) {
@@ -62,8 +65,8 @@ function get_id()
         }
 	}
 	
-	xhttp.open("GET", "mat/get_id", true);
-//	xhttp.send(param);
+	xhttp.open("POST", "mat/get_id", true);
+	xhttp.send(param);
 }
 </script>
 <body>
@@ -71,6 +74,12 @@ function get_id()
 <p>1. Connect One PCBA to the computer throught Wifi Module. </p>
 <p><!--<img src="images/cubby_board.JPG" width="1136" height="907" /> --></p>
 <p>2. Input ID number:</p>
+<p>Select MCU Type: 
+<select id="mcu_type" name="select" class="style_select" >
+  <option value="1">Weight Menusure MCU</option>
+  <option value="2">LCD Display MCU</option>
+</select>
+</p>
 <p>
   <label>MAT ID:  </label>
   <label>

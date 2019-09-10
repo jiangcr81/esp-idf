@@ -34,6 +34,23 @@ static const char *TAG = "RS485_ECHO_APP";
 
 static ST_CUBBY_BIN	m_bin;
 
+uint32 u32_mat_index;
+
+void ESP_LOG_STR(uint8 * pstr, int len)
+{
+	ESP_LOGI(TAG, "ESP_LOG_STR %u bytes:", len);
+	printf("[ ");
+	for (int i = 0; i < len; i++) {
+		printf("0x%.2X ", (uint8_t)pstr[i]);
+		//	uart_write_bytes(uart_num, (const char*)&data[i], 1);
+		// Add a Newline character if you get a return charater from paste (Paste tests multibyte receipt/buffer)
+		if (pstr[i] == '\r') {
+		//	uart_write_bytes(uart_num, "\n", 1);
+		}
+	}
+	printf("] \n");
+}
+
 uint8 calc_str_sum(uint8 * pstr, uint8 len)
 {
 	uint8 rxsumi;
@@ -156,7 +173,12 @@ void rs485_tx_package(uint8 type)
 	uart_write_bytes(uart_num, (char *)tx_buf, tx_len);
 }
 
-void rs485_cmd_set_id(uint8 idh, uint8 idl)
+/*
+0x55 0x12 0x01 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x01 0x00 0x02 0x00 0x01 0x00 0x6C
+0x55 0x12 0x01 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0xFF 0x00 0x02 0x00 0x01 0x01 0x6A
+
+*/
+void rs485_cmd_set_id(uint8 mcu_type, uint8 idh, uint8 idl)
 {
 	int uart_num = ECHO_UART_PORT;
 	uint8 tx_len = 0x12;
@@ -175,7 +197,11 @@ void rs485_cmd_set_id(uint8 idh, uint8 idl)
 	tx_buf[8] = 0x00;	//reserved
 	tx_buf[9] = 0x00;	//reserved
 	tx_buf[10] = 0x00;	//reserved
-	tx_buf[11] = PTL_CMD_ID;	//ID
+	if(mcu_type == MCU_TYPE_HOLTEK) {
+	tx_buf[11] = PTL_CMD_HTID;	//ID
+	} else if(mcu_type == MCU_TYPE_STM32) {
+	tx_buf[11] = PTL_CMD_STMID;	//ID
+	}
 	tx_buf[12] = 0x00;	//cmd type
 	tx_buf[13] = 0x02;	//payload length
 	tx_buf[14] = idh;	//device address h
@@ -184,11 +210,12 @@ void rs485_cmd_set_id(uint8 idh, uint8 idl)
 	tx_sum = if_data_ckeck(tx_buf, tx_len-2);
 	tx_buf[tx_len-2] = (tx_sum>>8)&0xFF;
 	tx_buf[tx_len-1] = (tx_sum)&0xFF;
-	
+
+	ESP_LOG_STR(tx_buf, tx_len);
 	uart_write_bytes(uart_num, (char *)tx_buf, tx_len);
 }
 
-void rs485_cmd_get_id(void)
+void rs485_cmd_get_id(uint8 mcu_type)
 {
 	int uart_num = ECHO_UART_PORT;
 	uint8 tx_len = 0x10;
@@ -207,7 +234,11 @@ void rs485_cmd_get_id(void)
 	tx_buf[8] = 0x00;	//reserved
 	tx_buf[9] = 0x00;	//reserved
 	tx_buf[10] = 0x00;	//reserved
-	tx_buf[11] = PTL_CMD_ID;	//ID
+	if(mcu_type == MCU_TYPE_HOLTEK) {
+	tx_buf[11] = PTL_CMD_HTID;	//ID
+	} else if(mcu_type == MCU_TYPE_STM32) {
+	tx_buf[11] = PTL_CMD_STMID;	//ID
+	}
 	tx_buf[12] = 0x00;	//cmd type
 	tx_buf[13] = 0x00;	//payload length
 	
@@ -215,6 +246,7 @@ void rs485_cmd_get_id(void)
 	tx_buf[tx_len-2] = (tx_sum>>8)&0xFF;
 	tx_buf[tx_len-1] = (tx_sum)&0xFF;
 	
+	ESP_LOG_STR(tx_buf, tx_len);
 	uart_write_bytes(uart_num, (char *)tx_buf, tx_len);
 }
 
@@ -244,7 +276,8 @@ void rs485_cmd_get_adc(uint8 idh, uint8 idl)
 	tx_sum = if_data_ckeck(tx_buf, tx_len-2);
 	tx_buf[tx_len-2] = (tx_sum>>8)&0xFF;
 	tx_buf[tx_len-1] = (tx_sum)&0xFF;
-	
+
+	ESP_LOG_STR(tx_buf, tx_len);
 	uart_write_bytes(uart_num, (char *)tx_buf, tx_len);
 }
 
@@ -282,6 +315,51 @@ void rs485_cmd_led(uint8 idh, uint8 idl, uint8 led_value)
 	uart_write_bytes(uart_num, (char *)tx_buf, tx_len);
 }
 
+/*
+0x55 0x1D 0x01 0x00 0x00 0x00 0x03 0x00 0x00 0x00 0x00 0xA1 0x00 0x0D 0x50 0x61 0x72 0x74 0x4E 0x75 0x6D 0x62 0x65 0x72 0x31 0x01 0x33 0x05 0x89
+0x55 0x1F 0x01 0x00 0x00 0x00 0x03 0x00 0x00 0x00 0x00 0xA1 0x00 0x0D 0x50 0x61 0x72 0x74 0x4E 0x75 0x6D 0x62 0x65 0x72 0x31 0x32 0x33 0x01 0x00 0x05 0xBD
+
+
+*/
+void rs485_cmd_lcd(uint8 idh, uint8 idl, uint8 type, uint8 len, char * cbuf, uint8 num)
+{
+	int uart_num = ECHO_UART_PORT;
+	uint8 tx_len = len+18, i;
+	uint16 tx_sum = 0;
+	uint8_t* tx_buf = (uint8_t*) malloc(tx_len+1);
+	memset(tx_buf, 0x00, tx_len+1);
+	
+	tx_buf[0] = PTL_PREFIX;
+	tx_buf[1] = tx_len;
+	tx_buf[2] = 0x01;	//type
+	tx_buf[3] = 0x00;	//host address h
+	tx_buf[4] = 0x00;	//host address l
+	tx_buf[5] = idh;	//device address h
+	tx_buf[6] = idl;	//device address l
+	tx_buf[7] = 0x00;	//reserved
+	tx_buf[8] = 0x00;	//reserved
+	tx_buf[9] = 0x00;	//reserved
+	tx_buf[10] = 0x00;	//reserved
+	tx_buf[11] = type;	//PTL_CMD_LCDA1
+	tx_buf[12] = 0x00;	//cmd type
+	tx_buf[13] = len+2;	//payload length
+	for(i=0; i<len; i++)
+	{
+		tx_buf[14+i] = cbuf[i];
+	}
+	tx_buf[tx_len-4] = num;
+	
+	tx_sum = if_data_ckeck(tx_buf, tx_len-2);
+	tx_buf[tx_len-2] = (tx_sum>>8)&0xFF;
+	tx_buf[tx_len-1] = (tx_sum)&0xFF;
+
+	ESP_LOG_STR(tx_buf, tx_len);
+	uart_write_bytes(uart_num, (char *)tx_buf, tx_len);
+}
+
+/*
+ * 通过 mat_id 查询到数组序列
+ */
 uint8 find_mat_index(uint16 mat_id)
 {
 	uint8 u8_ret = 0xFF, i;
@@ -318,10 +396,30 @@ void init_m_bin(void)
 		}
 	}
 
-	m_bin.m_mat[1].u16_mat_id = 0x0201;
+//	m_bin.m_mat[1].u16_mat_id = 0x0201;
 }
 
-uint32 api_get_id()
+void api_set_mat_id(uint8 index, uint32 mat_id)
+{
+	if(index < MAT_CNT_MAX)
+	{
+		m_bin.m_mat[index].u16_mat_id = mat_id;
+	}
+}
+
+void api_peeling(void)
+{
+	uint8 i = 0, j = 0;
+	for(i = 0; i<MAT_CNT_MAX; i++)
+	{
+		for(j = 0; j < 4; j++)
+		{
+			m_bin.m_mat[i].m_cubby[j].u32_adc_peeling = m_bin.m_mat[i].m_cubby[j].u32_adc_raw;
+		}
+	}
+}
+
+uint32 api_get_id(void)
 {
 	return m_bin.u32_single_id_rx;
 }
@@ -337,7 +435,7 @@ uint32 api_get_adc_raw(uint16 mat_id, uint8 cubby_index)
 	u8_mat_index = find_mat_index(mat_id);
 	if(u8_mat_index < MAT_CNT_MAX)
 	{
-		u32_ret = m_bin.m_mat[u8_mat_index].m_cubby[cubby_index].u32_adc_raw;
+		u32_ret = abs(m_bin.m_mat[u8_mat_index].m_cubby[cubby_index].u32_adc_raw - m_bin.m_mat[u8_mat_index].m_cubby[cubby_index].u32_adc_peeling);
 	}
 	return u32_ret>>5;
 }
@@ -368,12 +466,13 @@ void rs485_parse_rx(uint8 * psrc, uint8 len)
 				if(psrc[2] == 0x01)
 				{
 					u16_mat_id = ((uint16)psrc[3]<<8)|psrc[4];
+					
 				//	ESP_LOGI(TAG, "u16_mat_id = 0x%.4X", u16_mat_id);
 					u8_mat_index = find_mat_index(u16_mat_id);
 					if(u8_mat_index < MAT_CNT_MAX)
 					{
 
-						if(psrc[11] == PTL_CMD_ID)
+						if(psrc[11] == PTL_CMD_HTID || psrc[11] == PTL_CMD_STMID)
 						{
 							m_bin.u32_single_id_rx = u8_3_uint32(psrc[14], psrc[15], psrc[16]);
 						}
@@ -383,16 +482,35 @@ void rs485_parse_rx(uint8 * psrc, uint8 len)
 							m_bin.m_mat[u8_mat_index].m_cubby[1].u32_adc_raw = u8_3_uint32(psrc[17], psrc[18], psrc[19]);
 							m_bin.m_mat[u8_mat_index].m_cubby[2].u32_adc_raw = u8_3_uint32(psrc[20], psrc[21], psrc[22]);
 							m_bin.m_mat[u8_mat_index].m_cubby[3].u32_adc_raw = u8_3_uint32(psrc[23], psrc[24], psrc[25]);
-						//	ESP_LOGI(TAG,"cubby1:%d", m_bin.m_mat[u8_mat_index].m_cubby[0].u32_adc_raw);
-						//	ESP_LOGI(TAG,"cubby2:%d", m_bin.m_mat[u8_mat_index].m_cubby[1].u32_adc_raw);
-						//	ESP_LOGI(TAG,"cubby3:%d", m_bin.m_mat[u8_mat_index].m_cubby[2].u32_adc_raw);
-						//	ESP_LOGI(TAG,"cubby4:%d", m_bin.m_mat[u8_mat_index].m_cubby[3].u32_adc_raw);
+						//	ESP_LOGI(TAG,"[%d]cubby1:%d", u8_mat_index, m_bin.m_mat[u8_mat_index].m_cubby[0].u32_adc_raw);
+						//	ESP_LOGI(TAG,"[%d]cubby2:%d", u8_mat_index, m_bin.m_mat[u8_mat_index].m_cubby[1].u32_adc_raw);
+						//	ESP_LOGI(TAG,"[%d]cubby3:%d", u8_mat_index, m_bin.m_mat[u8_mat_index].m_cubby[2].u32_adc_raw);
+						//	ESP_LOGI(TAG,"[%d]cubby4:%d", u8_mat_index, m_bin.m_mat[u8_mat_index].m_cubby[3].u32_adc_raw);
 						//	ESP_LOGI(TAG, "store adc raw data ok!\r\n");
 						}
 					}
 				}
 			}
 		}
+	}
+}
+
+void rs485_get_mat_weight_next(void)
+{
+	uint32 u32_mat_id = 0;
+	uint8 idh = 0, idl = 0;
+	u32_mat_id = m_bin.m_mat[u32_mat_index].u16_mat_id;
+
+	if(u32_mat_id > 0)
+	{
+		idh = (u32_mat_id>>8)&0xFF;
+		idl = u32_mat_id&0xFF;
+		rs485_cmd_get_adc(idh, idl);
+	}
+	u32_mat_index++;
+	if(u32_mat_index > 3)
+	{
+		u32_mat_index = 0;
 	}
 }
 
@@ -434,6 +552,7 @@ void echo_task(void *arg)
     ESP_LOGI(TAG, "UART start recieve loop.\r\n");
 //	uart_write_bytes(uart_num, "Start RS485 UART test.\r\n", 24);
 	init_m_bin();
+	u32_mat_index = 0;
 
     while(1) {
         //Read data from UART
@@ -443,28 +562,14 @@ void echo_task(void *arg)
         //Write data back to UART
         if (len > 0) {
 			rs485_parse_rx(data, len);
-        //	uart_write_bytes(uart_num, "\r\n", 2);
-        //	char prefix[] = "RS485 Received: [";
-        //	uart_write_bytes(uart_num, prefix, (sizeof(prefix) - 1));
-            //*
-            ESP_LOGI(TAG, "Received %u bytes:", len);
-            printf("[ ");
-            for (int i = 0; i < len; i++) {
-                printf("0x%.2X ", (uint8_t)data[i]);
-            //	uart_write_bytes(uart_num, (const char*)&data[i], 1);
-                // Add a Newline character if you get a return charater from paste (Paste tests multibyte receipt/buffer)
-                if (data[i] == '\r') {
-                //	uart_write_bytes(uart_num, "\n", 1);
-                }
-            }
-            printf("] \n");
-            //*/
-        //	uart_write_bytes(uart_num, "]\r\n", 3);
+		//	ESP_LOG_STR(data, len);
+        
         } else {
+        	rs485_get_mat_weight_next();
             // Echo a "." to show we are alive while we wait for input
             //uart_write_bytes(uart_num, ".", 1);
 		//	rs485_tx_package(2);
-			rs485_cmd_get_adc(0x02, 0x01);
+			
 
 		//	rs485_cmd_led(2, 1, 3, 1);
         }

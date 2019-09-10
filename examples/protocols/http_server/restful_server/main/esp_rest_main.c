@@ -135,10 +135,10 @@ void app_main(void)
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     initialise_mdns();
 	
-    ESP_LOGI(TAG, "ESP_WIFI_MODE_AP");
-	wifi_init_softap();
+//	ESP_LOGI(TAG, "ESP_WIFI_MODE_AP");
+//	wifi_init_softap();
 
-//	ESP_ERROR_CHECK(example_connect());
+	ESP_ERROR_CHECK(example_connect());
 	ESP_ERROR_CHECK(init_fs());
 	ESP_ERROR_CHECK(start_rest_server(CONFIG_EXAMPLE_WEB_MOUNT_POINT));
 	

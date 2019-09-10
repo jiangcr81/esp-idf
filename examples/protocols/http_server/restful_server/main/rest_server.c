@@ -166,7 +166,7 @@ static esp_err_t rest_common_get_handler(httpd_req_t *req)
     return ESP_OK;
 }
 
-#if 1
+#if 0
 /* Simple handler for light brightness control */
 static esp_err_t light_brightness_post_handler(httpd_req_t *req)
 {
@@ -235,7 +235,8 @@ static esp_err_t mat_get_weight_handler(httpd_req_t *req)
 {
 	int total_len = req->content_len;
 	int cur_len = 0;
-	uint8 param_len=0, mat_id=0, idh=0, idl=0;
+	uint8 param_len=0, idh=0, idl=0;
+	uint32 u32_mat_id=0;
 	uint32 adc_show[4];
 	char *params = NULL;
 	
@@ -275,12 +276,12 @@ static esp_err_t mat_get_weight_handler(httpd_req_t *req)
 
 		if(strncmp(http_cgi_params[i],"mat_id", 6) == 0)
 		{
-			mat_id = atoi(http_cgi_param_vals[i]);
-			idh = mat_id/100;
-			idl = mat_id - (idh*100);
+			u32_mat_id = atoi(http_cgi_param_vals[i]);
+			idh = (u32_mat_id>>8)&0xFF;
+			idl = u32_mat_id&0xFF;
 		}
 	}
-//	ESP_LOGI(REST_TAG, "mat_id=%d, idh=%d, idl=%d", mat_id, idh, idl);
+	ESP_LOGI(REST_TAG, "mat_id=%d, idh=%d, idl=%d", u32_mat_id, idh, idl);
 
 	adc_show[0] = api_get_adc_raw((((uint16)idh<<8)|idl), 0);
 	adc_show[1] = api_get_adc_raw((((uint16)idh<<8)|idl), 1);
@@ -303,15 +304,49 @@ static esp_err_t mat_get_weight_handler(httpd_req_t *req)
 /* Simple handler for getting weight sensor data */
 static esp_err_t mat_get_id_handler(httpd_req_t *req)
 {
-	uint8 mat_id=0;
+	int total_len = req->content_len;
+	int cur_len = 0;
+	uint32 u32_mat_id=0;
+	uint8 param_len=0, mcu_type = 1;
+	char *buf = ((rest_server_context_t *)(req->user_ctx))->scratch;
+	int received = 0;
+	if (total_len >= SCRATCH_BUFSIZE) {
+		/* Respond with 500 Internal Server Error */
+		httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "content too long");
+		return ESP_FAIL;
+	}
+	while (cur_len < total_len) {
+		received = httpd_req_recv(req, buf + cur_len, total_len);
+		if (received <= 0) {
+			/* Respond with 500 Internal Server Error */
+			httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to post control value");
+			return ESP_FAIL;
+		}
+		cur_len += received;
+	}
+	buf[total_len] = '\0';
 
-	mat_id = api_get_id();
+	ESP_LOGI(REST_TAG, "buf[%s],cur_len=%d\r\n", buf, cur_len);
+	
+	param_len = parse_uri_parameters(buf);
 
-	ESP_LOGI(REST_TAG, "get mat_id=%d", mat_id);
+	for(int i=0; i<param_len; i++)
+	{
+		ESP_LOGI(REST_TAG, "http_cgi_params[%d]=%s,http_cgi_param_vals[%d]=%s\r\n",i,http_cgi_params[i],i,http_cgi_param_vals[i]);
+
+		if(strncmp(http_cgi_params[i],"mcu_type", 8) == 0)
+		{
+			mcu_type = atoi(http_cgi_param_vals[i]);
+		}
+	}
+	
+	u32_mat_id = api_get_id(mcu_type);
+
+	ESP_LOGI(REST_TAG, "get mat_id=%d", u32_mat_id);
 
     httpd_resp_set_type(req, "application/json");
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "mat_id:", mat_id);
+    cJSON_AddNumberToObject(root, "mat_id:", u32_mat_id);
     const char *sys_info = cJSON_Print(root);
     httpd_resp_sendstr(req, sys_info);
     free((void *)sys_info);
@@ -324,7 +359,8 @@ static esp_err_t mat_set_id_handler(httpd_req_t *req)
 {
 	int total_len = req->content_len;
 	int cur_len = 0;
-	uint8 param_len=0, mat_id=0, idh=0, idl=0;
+	uint8 param_len=0,  idh=0, idl=0, mcu_type = 1;
+	uint32 u32_mat_id=0;
 	char *buf = ((rest_server_context_t *)(req->user_ctx))->scratch;
 	int received = 0;
 	if (total_len >= SCRATCH_BUFSIZE) {
@@ -353,13 +389,17 @@ static esp_err_t mat_set_id_handler(httpd_req_t *req)
 
 		if(strncmp(http_cgi_params[i],"mat_id", 6) == 0)
 		{
-			mat_id = atoi(http_cgi_param_vals[i]);
-			idh = mat_id/100;
-			idl = mat_id - (idh*100);
+			u32_mat_id = atoi(http_cgi_param_vals[i]);
+			idh = (u32_mat_id>>8)&0xFF;
+			idl = u32_mat_id&0xFF;
+		}
+		else if(strncmp(http_cgi_params[i],"mcu_type", 8) == 0)
+		{
+			mcu_type = atoi(http_cgi_param_vals[i]);
 		}
 	}
-	ESP_LOGI(REST_TAG, "mat_id=%d,idh=%d, idl=%d", mat_id, idh, idl);
-	rs485_cmd_set_id(idh, idl);
+	ESP_LOGI(REST_TAG, "mat_id=%u, idh=%d, idl=%d", u32_mat_id, idh, idl);
+	rs485_cmd_set_id(mcu_type, idh, idl);
 
 	/* Redirect onto root to see the updated file list */
 	httpd_resp_set_status(req, HTTPD_200);
@@ -374,7 +414,8 @@ static esp_err_t mat_set_led_handler(httpd_req_t *req)
 {
 	int total_len = req->content_len;
 	int cur_len = 0;
-	uint8 param_len=0, mat_id=0, idh=0, idl=0, led_value=0;
+	uint8 param_len=0, idh=0, idl=0, led_value=0;
+	uint32 u32_mat_id=0;
 	char *buf = ((rest_server_context_t *)(req->user_ctx))->scratch;
 
 	int received = 0;
@@ -404,16 +445,16 @@ static esp_err_t mat_set_led_handler(httpd_req_t *req)
 
 		if(strncmp(http_cgi_params[i],"mat_id", 6) == 0)
 		{
-			mat_id = atoi(http_cgi_param_vals[i]);
-			idh = mat_id/100;
-			idl = mat_id - (idh*100);
+			u32_mat_id = atoi(http_cgi_param_vals[i]);
+			idh = (u32_mat_id>>8)&0xFF;
+			idl = u32_mat_id&0xFF;
 		}
 		else if(strncmp(http_cgi_params[i],"led_value", 9) == 0)
 		{
 			led_value = atoi(http_cgi_param_vals[i]);
 		}
 	}
-	ESP_LOGI(REST_TAG, "mat_id=%d,idh=%d, idl=%d, led_value=%d\r\n", mat_id, idh, idl, led_value);
+	ESP_LOGI(REST_TAG, "mat_id=%u,idh=%d, idl=%d, led_value=%d\r\n", u32_mat_id, idh, idl, led_value);
 
 	rs485_cmd_led(idh, idl, led_value);
 
@@ -425,12 +466,96 @@ static esp_err_t mat_set_led_handler(httpd_req_t *req)
     return ESP_OK;
 }
 
+/* Handler to the set wifi param onto the server */
+static esp_err_t wifi_set_param_handler(httpd_req_t *req)
+{
+	int total_len = req->content_len;
+	int cur_len = 0;
+	uint8 param_len=0;
+	uint32 u32_mat_id = 0;
+	char *buf = ((rest_server_context_t *)(req->user_ctx))->scratch;
+
+	int received = 0;
+	if (total_len >= SCRATCH_BUFSIZE) {
+		/* Respond with 500 Internal Server Error */
+		httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "content too long");
+		return ESP_FAIL;
+	}
+	while (cur_len < total_len) {
+		received = httpd_req_recv(req, buf + cur_len, total_len);
+		if (received <= 0) {
+			/* Respond with 500 Internal Server Error */
+			httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to post control value");
+			return ESP_FAIL;
+		}
+		cur_len += received;
+	}
+	buf[total_len] = '\0';
+
+	ESP_LOGI(REST_TAG, "buf[%s],cur_len=%d\r\n", buf, cur_len);
+
+	param_len = parse_uri_parameters(buf);
+
+	for(int i=0; i<param_len; i++)
+	{
+		ESP_LOGI(REST_TAG, "http_cgi_params[%d]=%s,http_cgi_param_vals[%d]=%s\r\n",i,http_cgi_params[i],i,http_cgi_param_vals[i]);
+
+		if(strncmp(http_cgi_params[i],"midl1", 5) == 0)
+		{
+			u32_mat_id = atoi(http_cgi_param_vals[i]);
+			if(u32_mat_id > 0)
+			{
+				api_set_mat_id(0, u32_mat_id);
+			}
+		}
+		else if(strncmp(http_cgi_params[i],"midr1", 5) == 0)
+		{
+			u32_mat_id = atoi(http_cgi_param_vals[i]);
+			if(u32_mat_id > 0)
+			{
+				api_set_mat_id(1, u32_mat_id);
+			}
+		}
+		else if(strncmp(http_cgi_params[i],"midl5", 5) == 0)
+		{
+			u32_mat_id = atoi(http_cgi_param_vals[i]);
+			if(u32_mat_id > 0)
+			{
+				api_set_mat_id(2, u32_mat_id);
+			}
+		}
+		else if(strncmp(http_cgi_params[i],"midr5", 5) == 0)
+		{
+			u32_mat_id = atoi(http_cgi_param_vals[i]);
+			if(u32_mat_id > 0)
+			{
+				api_set_mat_id(3, u32_mat_id);
+			}
+		}
+		else if(strncmp(http_cgi_params[i],"peeling_all", 11) == 0)
+		{
+			if(strncmp(http_cgi_param_vals[i],"true", 4) == 0)
+			{
+				api_peeling();
+			}
+		}
+	}
+
+	/* Redirect onto root to see the updated file list */
+	httpd_resp_set_status(req, HTTPD_200);
+//	httpd_resp_set_hdr(req, "Location", "self.reload()");
+	httpd_resp_sendstr(req, "Assign system mat Id array successfully");
+
+    return ESP_OK;
+}
+
 /* Handler to the set mat lcd onto the server */
 static esp_err_t mat_set_lcd_handler(httpd_req_t *req)
 {
 	int total_len = req->content_len;
 	int cur_len = 0;
-	uint8 param_len=0, mat_id=0, idh=0, idl=0;
+	uint8 param_len=0, idh=0, idl=0, lcd_type = 0xA1, str_len = 32, cubby_i = 1;
+	uint32 u32_mat_id = 0;
 	char *lcd_buf = NULL;
 	char *buf = ((rest_server_context_t *)(req->user_ctx))->scratch;
 
@@ -461,18 +586,27 @@ static esp_err_t mat_set_lcd_handler(httpd_req_t *req)
 
 		if(strncmp(http_cgi_params[i],"mat_id", 6) == 0)
 		{
-			mat_id = atoi(http_cgi_param_vals[i]);
-			idh = mat_id/100;
-			idl = mat_id - (idh*100);
+			u32_mat_id = atoi(http_cgi_param_vals[i]);
+			idh = (u32_mat_id>>8)&0xFF;
+			idl = u32_mat_id&0xFF;
 		}
-		else if(strncmp(http_cgi_params[i],"lcd_str", 9) == 0)
+		else if(strncmp(http_cgi_params[i],"lcd_str", 7) == 0)
 		{
 			lcd_buf = http_cgi_param_vals[i];
+			str_len = strlen(lcd_buf);
+		}
+		else if(strncmp(http_cgi_params[i],"lcd_type", 8) == 0)
+		{
+			lcd_type = atoi(http_cgi_param_vals[i]);
+		}
+		else if(strncmp(http_cgi_params[i],"lcd_num", 7) == 0)
+		{
+			cubby_i = atoi(http_cgi_param_vals[i]);
 		}
 	}
-	ESP_LOGI(REST_TAG, "mat_id=%d,idh=%d, idl=%d, lcd_str=%s\r\n", mat_id, idh, idl, lcd_buf);
 
-//	rs485_cmd_led(idh, idl, led_value);
+	rs485_cmd_lcd(idh, idl, lcd_type, str_len, lcd_buf, cubby_i);
+
 
 	/* Redirect onto root to see the updated file list */
 	httpd_resp_set_status(req, HTTPD_200);
@@ -498,7 +632,7 @@ esp_err_t start_rest_server(const char *base_path)
 
     ESP_LOGI(REST_TAG, "Starting HTTP Server");
     REST_CHECK(httpd_start(&server, &config) == ESP_OK, "Start server failed", err_start);
-#if 1
+#if 0
     /* URI handler for fetching system info */
     httpd_uri_t system_info_get_uri = {
         .uri = "/api/v1/system/info",
@@ -535,15 +669,6 @@ esp_err_t start_rest_server(const char *base_path)
     };
     httpd_register_uri_handler(server, &mat_get_weight);
 	
-	/* URI handler for fetching weight sensor data */
-    httpd_uri_t mat_get_id = {
-        .uri		= "/mat/get_id",
-        .method		= HTTP_GET,
-        .handler	= mat_get_id_handler,
-        .user_ctx	= rest_context
-    };
-    httpd_register_uri_handler(server, &mat_get_id);
-	
     /* URI handler for getting web server files */
     httpd_uri_t common_get_uri = {
         .uri		= "/*",
@@ -561,6 +686,15 @@ esp_err_t start_rest_server(const char *base_path)
         .user_ctx  = rest_context
     };
     httpd_register_uri_handler(server, &mat_set_id);
+	
+	/* URI handler for fetching weight sensor data */
+    httpd_uri_t mat_get_id = {
+        .uri		= "/mat/get_id",
+        .method		= HTTP_POST,
+        .handler	= mat_get_id_handler,
+        .user_ctx	= rest_context
+    };
+    httpd_register_uri_handler(server, &mat_get_id);
 
 	/* URI handler for set mat led */
     httpd_uri_t mat_set_led = {
@@ -579,6 +713,15 @@ esp_err_t start_rest_server(const char *base_path)
         .user_ctx  = rest_context
     };
     httpd_register_uri_handler(server, &mat_set_lcd);
+
+	/* URI handler for set wifi param */
+    httpd_uri_t wifi_set_param = {
+        .uri       = "/wifi/set_param",
+        .method    = HTTP_POST,
+        .handler   = wifi_set_param_handler,
+        .user_ctx  = rest_context
+    };
+    httpd_register_uri_handler(server, &wifi_set_param);
 
     return ESP_OK;
 err_start:

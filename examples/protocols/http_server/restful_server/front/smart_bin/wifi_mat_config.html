@@ -1,0 +1,112 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Wifi Mat Config</title>
+</head>
+<script>
+function set_id()
+{
+	var midl1 = document.getElementById("midl1").value;
+	var midl2 = document.getElementById("midl2").value;
+	var midl3 = document.getElementById("midl3").value;
+	var midl4 = document.getElementById("midl4").value;
+	var midl5 = document.getElementById("midl5").value;
+	
+	var midr1 = document.getElementById("midr1").value;
+	var midr2 = document.getElementById("midr2").value;
+	var midr3 = document.getElementById("midr3").value;
+	var midr4 = document.getElementById("midr4").value;
+	var midr5 = document.getElementById("midr5").value;
+	
+	var param = "midl1="+midl1+"&midl2="+midl2+"&midl3="+midl3+"&midl4="+midl4+"&midl5="+midl5+"&midr1="+midr1+"&midr2="+midr2+"&midr3="+midr3+"&midr4="+midr4+"&midr5="+midr5;
+	var xhttp = new XMLHttpRequest();
+	xhttp.onreadystatechange = function() {
+		if (xhttp.readyState == 4) {
+			if (xhttp.status == 200) {
+				document.open();
+				document.write(xhttp.responseText);
+				document.close();
+			} else if (xhttp.status == 0) {
+				alert("Server closed the connection abruptly!");
+				location.reload()
+			} else {
+				alert(xhttp.status + " Error!\n" + xhttp.responseText);
+				location.reload()
+			}
+		}
+	}
+	
+	xhttp.open("POST", "wifi/set_param", true);
+	xhttp.send(param);
+
+}
+
+function peeling()
+{
+	var param = "peeling_all=true";
+	var xhttp = new XMLHttpRequest();
+	xhttp.onreadystatechange = function() {
+		if (xhttp.readyState == 4) {
+			if (xhttp.status == 200) {
+				document.open();
+				document.write(xhttp.responseText);
+				document.close();
+			} else if (xhttp.status == 0) {
+				alert("Server closed the connection abruptly!");
+				location.reload()
+			} else {
+				alert(xhttp.status + " Error!\n" + xhttp.responseText);
+				location.reload()
+			}
+		}
+	}
+	
+	xhttp.open("POST", "wifi/set_param", true);
+	xhttp.send(param);
+
+}
+</script>
+<body>
+<h1 align="center"> Welcome to Wifi Mat Configuration Page </h1>
+<p>Config Wifi Module loop query Mat ID:</p>
+<table width="100%" border="1">
+  <tr>
+    <td colspan="2"><div align="center">Left </div></td>
+    <td colspan="2"><div align="center">Right</div></td>
+  </tr>
+  <tr>
+    <td>Floor 5 </td>
+    <td>Mat Id:<input name="textfield" type="text" id="midl5" size="4" maxlength="4" /></td>
+    <td>Floor 5 </td>
+    <td>Mat Id:<input name="textfield6"  type="text" id="midr5" size="4" maxlength="4" /></td>
+  </tr>
+  <tr>
+    <td>Floor 4 </td>
+    <td>Mat Id:<input name="textfield2" type="text" id="midl4" size="4" maxlength="4" /></td>
+    <td>Floor 4 </td>
+    <td>Mat Id:<input name="textfield7" type="text" id="midr4" size="4" maxlength="4" /></td>
+  </tr>
+  <tr>
+    <td>Floor 3 </td>
+    <td>Mat Id:<input name="textfield3" type="text" id="midl3" size="4" maxlength="4" /></td>
+    <td>Floor 3 </td>
+    <td>Mat Id:<input name="textfield8" type="text" id="midr3" size="4" maxlength="4" /></td>
+  </tr>
+  <tr>
+    <td>Floor 2 </td>
+    <td>Mat Id:<input name="textfield4" type="text" id="midl2" size="4" maxlength="4" /></td>
+    <td>Floor 2 </td>
+    <td>Mat Id:<input name="textfield9" type="text" id="midr2" size="4" maxlength="4" /></td>
+  </tr>
+  <tr>
+    <td>Floor 1 </td>
+    <td>Mat Id:<input name="textfield5" type="text" id="midl1" size="4" maxlength="4" /></td>
+    <td>Floor 1 </td>
+    <td>Mat Id:<input name="textfield10" type="text" id="midr1" size="4" maxlength="4" /></td>
+  </tr>
+</table>
+<p><button id="mat_id_set" type="button" onclick="set_id()">Set</button></p>
+<p><button id="mat_id_set" type="button" onclick="peeling()">Peeling</button></p>
+</body>
+</html>

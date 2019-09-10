@@ -16,16 +16,24 @@
 #define BAUD_RATE       (9600)
 
 // Read packet timeout
-#define PACKET_READ_TICS        (1000 / portTICK_RATE_MS)		//100ms
+#define PACKET_READ_TICS        (200 / portTICK_RATE_MS)		//100ms
 #define ECHO_TASK_STACK_SIZE    (2048)
 #define ECHO_TASK_PRIO          (10)
 #define ECHO_UART_PORT          (UART_NUM_2)
 
 #define	PTL_PREFIX		0x55
 
-#define	PTL_CMD_ID		0x01
+#define	MCU_TYPE_HOLTEK		0x01
+#define	MCU_TYPE_STM32		0x02
+
+#define	PTL_CMD_HTID	0xFF
+#define	PTL_CMD_STMID	0xFE
 #define	PTL_CMD_WEIGHT	0x03
 #define	PTL_CMD_LED		0x05
+#define	PTL_CMD_LCDA1	0xA1
+#define	PTL_CMD_LCDA2	0xA2
+#define	PTL_CMD_LCDA3	0xA3
+#define	PTL_CMD_LCDA4	0xA4
 
 #define	MAT_CNT_MAX		10
 
@@ -49,7 +57,7 @@ typedef struct
 
 typedef struct
 {
-	uint16		u16_mat_id;
+	uint32		u16_mat_id;
 	ST_CUBBY	m_cubby[4];
 }ST_MAT;
 
@@ -77,11 +85,14 @@ uint8 find_mat_index(uint16 mat_id);
 
 void rs485_tx_package(uint8 type);
 void rs485_cmd_led(uint8 idh, uint8 idl, uint8 led_value);
-void rs485_cmd_set_id(uint8 idh, uint8 idl);
-void rs485_cmd_get_id(void);
+void rs485_cmd_set_id(uint8 mcu_type, uint8 idh, uint8 idl);
+void rs485_cmd_get_id(uint8 mcu_type);
+void rs485_cmd_lcd(uint8 idh, uint8 idl, uint8 type, uint8 len, char * cbuf, uint8 num);
 
 uint32 api_get_adc_raw(uint16 mat_id, uint8 cubby_index);
 uint32 api_get_id();
+void api_set_mat_id(uint8 index, uint32 mat_id);
+void api_peeling(void);
 
 
 #endif

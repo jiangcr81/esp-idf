@@ -38,7 +38,7 @@ initializer that should be kept in sync
         .server_port        = 80,                       \
         .ctrl_port          = 32768,                    \
         .max_open_sockets   = 7,                        \
-        .max_uri_handlers   = 8,                        \
+        .max_uri_handlers   = 16,                        \
         .max_resp_headers   = 8,                        \
         .backlog_conn       = 5,                        \
         .lru_purge_enable   = false,                    \
