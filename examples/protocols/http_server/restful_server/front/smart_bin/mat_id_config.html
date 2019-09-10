@@ -36,9 +36,34 @@ function set_id()
             }
 		}
 		
-		xhttp.open("POST", "mat_id/set", true);
+		xhttp.open("POST", "mat/set_id", true);
         xhttp.send(param);
 	}
+}
+
+function get_id()
+{
+	document.getElementById("mat_id_get").disabled = true;
+	
+	var xhttp = new XMLHttpRequest();
+	xhttp.onreadystatechange = function() {
+		if (xhttp.readyState == 4) {
+            if (xhttp.status == 200) {
+                document.open();
+                document.write(xhttp.responseText);
+                document.close();
+            } else if (xhttp.status == 0) {
+                alert("Server closed the connection abruptly!");
+                location.reload()
+            } else {
+                alert(xhttp.status + " Error!\n" + xhttp.responseText);
+                location.reload()
+            }
+        }
+	}
+	
+	xhttp.open("GET", "mat/get_id", true);
+//	xhttp.send(param);
 }
 </script>
 <body>
@@ -57,11 +82,9 @@ function set_id()
 <p>3. Read ID number:</p>
 <p>
   <label>
-  <input type="submit" name="Submit_get_id" value="Get" />
+  <button id="mat_id_get" type="button" onclick="get_id()">Get ID</button>
   </label>
-  <label>
-  <input type="text" name="textfield_id_get" />
-  </label>
+  
 </p>
 </body>
 </html>

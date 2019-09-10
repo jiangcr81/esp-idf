@@ -231,7 +231,7 @@ static esp_err_t temperature_data_get_handler(httpd_req_t *req)
 #endif
 
 /* Simple handler for getting weight sensor data */
-static esp_err_t mat_weight_data_get_handler(httpd_req_t *req)
+static esp_err_t mat_get_weight_handler(httpd_req_t *req)
 {
 	int total_len = req->content_len;
 	int cur_len = 0;
@@ -300,11 +300,31 @@ static esp_err_t mat_weight_data_get_handler(httpd_req_t *req)
     return ESP_OK;
 }
 
+/* Simple handler for getting weight sensor data */
+static esp_err_t mat_get_id_handler(httpd_req_t *req)
+{
+	uint8 mat_id=0;
+
+	mat_id = api_get_id();
+
+	ESP_LOGI(REST_TAG, "get mat_id=%d", mat_id);
+
+    httpd_resp_set_type(req, "application/json");
+    cJSON *root = cJSON_CreateObject();
+    cJSON_AddNumberToObject(root, "mat_id:", mat_id);
+    const char *sys_info = cJSON_Print(root);
+    httpd_resp_sendstr(req, sys_info);
+    free((void *)sys_info);
+    cJSON_Delete(root);
+    return ESP_OK;
+}
+
 /* Handler to the mat id onto the server */
-static esp_err_t mat_id_set_handler(httpd_req_t *req)
+static esp_err_t mat_set_id_handler(httpd_req_t *req)
 {
 	int total_len = req->content_len;
 	int cur_len = 0;
+	uint8 param_len=0, mat_id=0, idh=0, idl=0;
 	char *buf = ((rest_server_context_t *)(req->user_ctx))->scratch;
 	int received = 0;
 	if (total_len >= SCRATCH_BUFSIZE) {
@@ -324,18 +344,33 @@ static esp_err_t mat_id_set_handler(httpd_req_t *req)
 	buf[total_len] = '\0';
 
 	ESP_LOGI(REST_TAG, "buf[%s],cur_len=%d\r\n", buf, cur_len);
-//	rs485_tx_package(1);
+	
+	param_len = parse_uri_parameters(buf);
+
+	for(int i=0; i<param_len; i++)
+	{
+		ESP_LOGI(REST_TAG, "http_cgi_params[%d]=%s,http_cgi_param_vals[%d]=%s\r\n",i,http_cgi_params[i],i,http_cgi_param_vals[i]);
+
+		if(strncmp(http_cgi_params[i],"mat_id", 6) == 0)
+		{
+			mat_id = atoi(http_cgi_param_vals[i]);
+			idh = mat_id/100;
+			idl = mat_id - (idh*100);
+		}
+	}
+	ESP_LOGI(REST_TAG, "mat_id=%d,idh=%d, idl=%d", mat_id, idh, idl);
+	rs485_cmd_set_id(idh, idl);
 
 	/* Redirect onto root to see the updated file list */
 	httpd_resp_set_status(req, HTTPD_200);
-	httpd_resp_set_hdr(req, "Location", "self.reload()");
-//	httpd_resp_sendstr(req, "Set MAT ID successfully");
+//	httpd_resp_set_hdr(req, "Location", "self.reload()");
+	httpd_resp_sendstr(req, "Set MAT ID successfully");
 
     return ESP_OK;
 }
 
-/* Handler to the cubby led onto the server */
-static esp_err_t cubby_led_set_handler(httpd_req_t *req)
+/* Handler to the set mat led onto the server */
+static esp_err_t mat_set_led_handler(httpd_req_t *req)
 {
 	int total_len = req->content_len;
 	int cur_len = 0;
@@ -390,6 +425,63 @@ static esp_err_t cubby_led_set_handler(httpd_req_t *req)
     return ESP_OK;
 }
 
+/* Handler to the set mat lcd onto the server */
+static esp_err_t mat_set_lcd_handler(httpd_req_t *req)
+{
+	int total_len = req->content_len;
+	int cur_len = 0;
+	uint8 param_len=0, mat_id=0, idh=0, idl=0;
+	char *lcd_buf = NULL;
+	char *buf = ((rest_server_context_t *)(req->user_ctx))->scratch;
+
+	int received = 0;
+	if (total_len >= SCRATCH_BUFSIZE) {
+		/* Respond with 500 Internal Server Error */
+		httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "content too long");
+		return ESP_FAIL;
+	}
+	while (cur_len < total_len) {
+		received = httpd_req_recv(req, buf + cur_len, total_len);
+		if (received <= 0) {
+			/* Respond with 500 Internal Server Error */
+			httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to post control value");
+			return ESP_FAIL;
+		}
+		cur_len += received;
+	}
+	buf[total_len] = '\0';
+
+	ESP_LOGI(REST_TAG, "buf[%s],cur_len=%d\r\n", buf, cur_len);
+
+	param_len = parse_uri_parameters(buf);
+
+	for(int i=0; i<param_len; i++)
+	{
+		ESP_LOGI(REST_TAG, "http_cgi_params[%d]=%s,http_cgi_param_vals[%d]=%s\r\n",i,http_cgi_params[i],i,http_cgi_param_vals[i]);
+
+		if(strncmp(http_cgi_params[i],"mat_id", 6) == 0)
+		{
+			mat_id = atoi(http_cgi_param_vals[i]);
+			idh = mat_id/100;
+			idl = mat_id - (idh*100);
+		}
+		else if(strncmp(http_cgi_params[i],"lcd_str", 9) == 0)
+		{
+			lcd_buf = http_cgi_param_vals[i];
+		}
+	}
+	ESP_LOGI(REST_TAG, "mat_id=%d,idh=%d, idl=%d, lcd_str=%s\r\n", mat_id, idh, idl, lcd_buf);
+
+//	rs485_cmd_led(idh, idl, led_value);
+
+	/* Redirect onto root to see the updated file list */
+	httpd_resp_set_status(req, HTTPD_200);
+//	httpd_resp_set_hdr(req, "Location", "self.reload()");
+//	httpd_resp_sendstr(req, "Set Cubby LED successfully");
+
+    return ESP_OK;
+}
+
 /*
  * http://192.168.4.1/mat/get_weight?mat_id=0201
  */
@@ -435,13 +527,22 @@ esp_err_t start_rest_server(const char *base_path)
     httpd_register_uri_handler(server, &light_brightness_post_uri);
 #endif
 	/* URI handler for fetching weight sensor data */
-    httpd_uri_t mat_weight_data_get_uri = {
+    httpd_uri_t mat_get_weight = {
         .uri		= "/mat/get_weight",
         .method		= HTTP_GET,
-        .handler	= mat_weight_data_get_handler,
+        .handler	= mat_get_weight_handler,
         .user_ctx	= rest_context
     };
-    httpd_register_uri_handler(server, &mat_weight_data_get_uri);
+    httpd_register_uri_handler(server, &mat_get_weight);
+	
+	/* URI handler for fetching weight sensor data */
+    httpd_uri_t mat_get_id = {
+        .uri		= "/mat/get_id",
+        .method		= HTTP_GET,
+        .handler	= mat_get_id_handler,
+        .user_ctx	= rest_context
+    };
+    httpd_register_uri_handler(server, &mat_get_id);
 	
     /* URI handler for getting web server files */
     httpd_uri_t common_get_uri = {
@@ -453,23 +554,31 @@ esp_err_t start_rest_server(const char *base_path)
     httpd_register_uri_handler(server, &common_get_uri);
 	
 	/* URI handler for set mat id */
-    httpd_uri_t mat_id_set = {
-        .uri       = "/mat_id/set",
+    httpd_uri_t mat_set_id = {
+        .uri       = "/mat/set_id",
         .method    = HTTP_POST,
-        .handler   = mat_id_set_handler,
+        .handler   = mat_set_id_handler,
         .user_ctx  = rest_context
     };
-    httpd_register_uri_handler(server, &mat_id_set);
+    httpd_register_uri_handler(server, &mat_set_id);
 
-	/* URI handler for set cubby led */
-    httpd_uri_t cubby_led_set = {
-        .uri       = "/mat_led/control",
+	/* URI handler for set mat led */
+    httpd_uri_t mat_set_led = {
+        .uri       = "/mat/set_led",
         .method    = HTTP_POST,
-        .handler   = cubby_led_set_handler,
+        .handler   = mat_set_led_handler,
         .user_ctx  = rest_context
     };
-    httpd_register_uri_handler(server, &cubby_led_set);
+    httpd_register_uri_handler(server, &mat_set_led);
 
+	/* URI handler for set mat lcd */
+    httpd_uri_t mat_set_lcd = {
+        .uri       = "/mat/set_lcd",
+        .method    = HTTP_POST,
+        .handler   = mat_set_lcd_handler,
+        .user_ctx  = rest_context
+    };
+    httpd_register_uri_handler(server, &mat_set_lcd);
 
     return ESP_OK;
 err_start:

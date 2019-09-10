@@ -23,7 +23,8 @@
 
 #define	PTL_PREFIX		0x55
 
-#define	PTL_CMD_WEIGHT		0x03
+#define	PTL_CMD_ID		0x01
+#define	PTL_CMD_WEIGHT	0x03
 #define	PTL_CMD_LED		0x05
 
 #define	MAT_CNT_MAX		10
@@ -67,13 +68,20 @@ typedef struct
 	uint8	str_wifi_password[100];
 	uint8	str_wifi_ssid[50];
 	ST_MAT	m_mat[MAT_CNT_MAX];
+	uint32	u32_single_id_tx;
+	uint32	u32_single_id_rx;
 }ST_CUBBY_BIN;
 
 void echo_task(void *arg);
+uint8 find_mat_index(uint16 mat_id);
+
 void rs485_tx_package(uint8 type);
 void rs485_cmd_led(uint8 idh, uint8 idl, uint8 led_value);
-uint8 find_mat_index(uint16 mat_id);
+void rs485_cmd_set_id(uint8 idh, uint8 idl);
+void rs485_cmd_get_id(void);
+
 uint32 api_get_adc_raw(uint16 mat_id, uint8 cubby_index);
+uint32 api_get_id();
 
 
 #endif
