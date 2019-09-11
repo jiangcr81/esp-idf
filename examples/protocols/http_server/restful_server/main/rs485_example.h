@@ -16,7 +16,7 @@
 #define BAUD_RATE       (9600)
 
 // Read packet timeout
-#define PACKET_READ_TICS        (200 / portTICK_RATE_MS)		//100ms
+#define PACKET_READ_TICS        (100 / portTICK_RATE_MS)		//100ms
 #define ECHO_TASK_STACK_SIZE    (2048)
 #define ECHO_TASK_PRIO          (10)
 #define ECHO_UART_PORT          (UART_NUM_2)
@@ -36,6 +36,7 @@
 #define	PTL_CMD_LCDA4	0xA4
 
 #define	MAT_CNT_MAX		10
+#define	QUERY_DELAY_MAX	1
 
 typedef struct
 {
@@ -45,10 +46,11 @@ typedef struct
 	uint8	str_desc2[30];
 	uint32	u32_min_qty;
 	uint32	u32_max_qty;
-	uint32	u32_reorder_qty;
-	float	f_weight;
-	float	f_sigel_weight;
-	uint32	u32_current_qty;
+	uint32	u32_reorder_qty;		//报警数量
+	float	f_wperadc;				//1ADC值对应的重量g
+	float	f_weight;				//总重量
+	float	f_single_weight;		//单个重量
+	uint32	u32_current_qty;		//总个数
 	uint8	u8_picture[30];
 	uint32	u32_adc_raw;			//ADC原始值
 	uint32	u32_adc_peeling;		//ADC去皮值
@@ -57,7 +59,8 @@ typedef struct
 
 typedef struct
 {
-	uint32		u16_mat_id;
+	uint32	u16_mat_id;
+	uint32	u32_lcd_id;
 	ST_CUBBY	m_cubby[4];
 }ST_MAT;
 
@@ -80,6 +83,8 @@ typedef struct
 	uint32	u32_single_id_rx;
 }ST_CUBBY_BIN;
 
+void ESP_LOG_STR(uint8 * pstr, int len);
+
 void echo_task(void *arg);
 uint8 find_mat_index(uint16 mat_id);
 
@@ -92,6 +97,7 @@ void rs485_cmd_lcd(uint8 idh, uint8 idl, uint8 type, uint8 len, char * cbuf, uin
 uint32 api_get_adc_raw(uint16 mat_id, uint8 cubby_index);
 uint32 api_get_id();
 void api_set_mat_id(uint8 index, uint32 mat_id);
+void api_set_mat_lcd_id(uint8 index, uint32 id);
 void api_peeling(void);
 
 

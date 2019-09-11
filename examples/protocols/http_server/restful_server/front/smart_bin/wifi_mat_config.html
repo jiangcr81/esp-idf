@@ -19,7 +19,20 @@ function set_id()
 	var midr4 = document.getElementById("midr4").value;
 	var midr5 = document.getElementById("midr5").value;
 	
+	var lcdl1 = document.getElementById("lcdl1").value;
+	var lcdl2 = document.getElementById("lcdl2").value;
+	var lcdl3 = document.getElementById("lcdl3").value;
+	var lcdl4 = document.getElementById("lcdl4").value;
+	var lcdl5 = document.getElementById("lcdl5").value;
+	
+	var lcdr1 = document.getElementById("lcdr1").value;
+	var lcdr2 = document.getElementById("lcdr2").value;
+	var lcdr3 = document.getElementById("lcdr3").value;
+	var lcdr4 = document.getElementById("lcdr4").value;
+	var lcdr5 = document.getElementById("lcdr5").value;
+	
 	var param = "midl1="+midl1+"&midl2="+midl2+"&midl3="+midl3+"&midl4="+midl4+"&midl5="+midl5+"&midr1="+midr1+"&midr2="+midr2+"&midr3="+midr3+"&midr4="+midr4+"&midr5="+midr5;
+	var param2 = "&lcdl1="+lcdl1+"&lcdl2="+lcdl2+"&lcdl3="+lcdl3+"&lcdl4="+lcdl4+"&lcdl5="+lcdl5+"&lcdr1="+lcdr1+"&lcdr2="+lcdr2+"&lcdr3="+lcdr3+"&lcdr4="+lcdr4+"&lcdr5="+lcdr5;
 	var xhttp = new XMLHttpRequest();
 	xhttp.onreadystatechange = function() {
 		if (xhttp.readyState == 4) {
@@ -38,7 +51,7 @@ function set_id()
 	}
 	
 	xhttp.open("POST", "wifi/set_param", true);
-	xhttp.send(param);
+	xhttp.send(param+param2);
 
 }
 
@@ -77,33 +90,63 @@ function peeling()
   </tr>
   <tr>
     <td>Floor 5 </td>
-    <td>Mat Id:<input name="textfield" type="text" id="midl5" size="4" maxlength="4" /></td>
+    <td>Mat Id:<input name="textfield" type="text" id="midl5" size="4" maxlength="4" />
+      ; Lcd Id:
+      <input name="textfield523" type="text" id="lcdl5" size="4" maxlength="4" />
+;</td>
     <td>Floor 5 </td>
-    <td>Mat Id:<input name="textfield6"  type="text" id="midr5" size="4" maxlength="4" /></td>
+    <td>Mat Id:<input name="textfield6"  type="text" id="midr5" size="4" maxlength="4" />
+      ; Lcd Id:
+      <input name="textfield5210" type="text" id="lcdr5" size="4" maxlength="4" />
+;</td>
   </tr>
   <tr>
     <td>Floor 4 </td>
-    <td>Mat Id:<input name="textfield2" type="text" id="midl4" size="4" maxlength="4" /></td>
+    <td>Mat Id:<input name="textfield2" type="text" id="midl4" size="4" maxlength="4" />
+      ; Lcd Id:
+      <input name="textfield524" type="text" id="lcdl4" size="4" maxlength="4" />
+;</td>
     <td>Floor 4 </td>
-    <td>Mat Id:<input name="textfield7" type="text" id="midr4" size="4" maxlength="4" /></td>
+    <td>Mat Id:<input name="textfield7" type="text" id="midr4" size="4" maxlength="4" />
+      ; Lcd Id:
+      <input name="textfield529" type="text" id="lcdr4" size="4" maxlength="4" />
+;</td>
   </tr>
   <tr>
     <td>Floor 3 </td>
-    <td>Mat Id:<input name="textfield3" type="text" id="midl3" size="4" maxlength="4" /></td>
+    <td>Mat Id:<input name="textfield3" type="text" id="midl3" size="4" maxlength="4" />
+      ; Lcd Id:
+      <input name="textfield525" type="text" id="lcdl3" size="4" maxlength="4" />
+;</td>
     <td>Floor 3 </td>
-    <td>Mat Id:<input name="textfield8" type="text" id="midr3" size="4" maxlength="4" /></td>
+    <td>Mat Id:<input name="textfield8" type="text" id="midr3" size="4" maxlength="4" />
+      ; Lcd Id:
+      <input name="textfield528" type="text" id="lcdr3" size="4" maxlength="4" />
+;</td>
   </tr>
   <tr>
     <td>Floor 2 </td>
-    <td>Mat Id:<input name="textfield4" type="text" id="midl2" size="4" maxlength="4" /></td>
+    <td>Mat Id:<input name="textfield4" type="text" id="midl2" size="4" maxlength="4" />
+      ; Lcd Id:
+      <input name="textfield526" type="text" id="lcdl2" size="4" maxlength="4" />
+;</td>
     <td>Floor 2 </td>
-    <td>Mat Id:<input name="textfield9" type="text" id="midr2" size="4" maxlength="4" /></td>
+    <td>Mat Id:<input name="textfield9" type="text" id="midr2" size="4" maxlength="4" />
+      ; Lcd Id:
+      <input name="textfield527" type="text" id="lcdr2" size="4" maxlength="4" />
+;</td>
   </tr>
   <tr>
     <td>Floor 1 </td>
-    <td>Mat Id:<input name="textfield5" type="text" id="midl1" size="4" maxlength="4" /></td>
+    <td>Mat Id:<input name="textfield5" type="text" id="midl1" size="4" maxlength="4" />
+    ; Lcd Id: 
+      <input name="textfield52" type="text" id="lcdl1" size="4" maxlength="4" />
+      ;</td>
     <td>Floor 1 </td>
-    <td>Mat Id:<input name="textfield10" type="text" id="midr1" size="4" maxlength="4" /></td>
+    <td>Mat Id:<input name="textfield10" type="text" id="midr1" size="4" maxlength="4" />
+; Lcd Id:
+  <input name="textfield522" type="text" id="lcdr1" size="4" maxlength="4" />
+;</td>
   </tr>
 </table>
 <p><button id="mat_id_set" type="button" onclick="set_id()">Set</button></p>

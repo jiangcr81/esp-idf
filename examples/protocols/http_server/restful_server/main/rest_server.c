@@ -128,6 +128,7 @@ static esp_err_t rest_common_get_handler(httpd_req_t *req)
     } else {
         strlcat(filepath, req->uri, sizeof(filepath));
     }
+	ESP_LOGE(REST_TAG, "filepath : %s", filepath);
     int fd = open(filepath, O_RDONLY, 0);
     if (fd == -1) {
         ESP_LOGE(REST_TAG, "Failed to open file : %s", filepath);
@@ -530,6 +531,38 @@ static esp_err_t wifi_set_param_handler(httpd_req_t *req)
 			if(u32_mat_id > 0)
 			{
 				api_set_mat_id(3, u32_mat_id);
+			}
+		}
+		else if(strncmp(http_cgi_params[i],"lcdl1", 5) == 0)
+		{
+			u32_mat_id = atoi(http_cgi_param_vals[i]);
+			if(u32_mat_id > 0)
+			{
+				api_set_mat_lcd_id(0, u32_mat_id);
+			}
+		}
+		else if(strncmp(http_cgi_params[i],"lcdr1", 5) == 0)
+		{
+			u32_mat_id = atoi(http_cgi_param_vals[i]);
+			if(u32_mat_id > 0)
+			{
+				api_set_mat_lcd_id(1, u32_mat_id);
+			}
+		}
+		else if(strncmp(http_cgi_params[i],"lcdl5", 5) == 0)
+		{
+			u32_mat_id = atoi(http_cgi_param_vals[i]);
+			if(u32_mat_id > 0)
+			{
+				api_set_mat_lcd_id(2, u32_mat_id);
+			}
+		}
+		else if(strncmp(http_cgi_params[i],"lcdr5", 5) == 0)
+		{
+			u32_mat_id = atoi(http_cgi_param_vals[i]);
+			if(u32_mat_id > 0)
+			{
+				api_set_mat_lcd_id(3, u32_mat_id);
 			}
 		}
 		else if(strncmp(http_cgi_params[i],"peeling_all", 11) == 0)

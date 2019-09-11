@@ -38,6 +38,7 @@ typedef union{
 #include "softap_example_main.h"
 
 #if (SD_CARD_EN == 1)
+#include "esp_vfs.h"
 #include "sd_card_user.h"
 #endif
 

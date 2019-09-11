@@ -115,6 +115,64 @@ function lcd_show()
 	xhttp.send(param);
 
 }
+
+function lcd_show2()
+{
+	var mat_id = document.getElementById("mat_id_set_input").value;
+	var lcd_num = document.getElementById("lcd_num").value;
+	var lcd_str = document.getElementById("lcd_str_weight").value;
+	
+	var param = "mat_id="+mat_id+"&lcd_type=162"+"&lcd_num="+lcd_num+"&lcd_str="+lcd_str;
+	var xhttp = new XMLHttpRequest();
+	xhttp.onreadystatechange = function() {
+		if (xhttp.readyState == 4) {
+			if (xhttp.status == 200) {
+				document.open();
+				document.write(xhttp.responseText);
+				document.close();
+			} else if (xhttp.status == 0) {
+				alert("Server closed the connection abruptly!");
+				location.reload()
+			} else {
+				alert(xhttp.status + " Error!\n" + xhttp.responseText);
+				location.reload()
+			}
+		}
+	}
+	
+	xhttp.open("POST", "mat/set_lcd", true);
+	xhttp.send(param);
+
+}
+
+function lcd_show3()
+{
+	var mat_id = document.getElementById("mat_id_set_input").value;
+	var lcd_num = document.getElementById("lcd_num").value;
+	var lcd_str = document.getElementById("lcd_str_qty").value;
+	
+	var param = "mat_id="+mat_id+"&lcd_type=163"+"&lcd_num="+lcd_num+"&lcd_str="+lcd_str;
+	var xhttp = new XMLHttpRequest();
+	xhttp.onreadystatechange = function() {
+		if (xhttp.readyState == 4) {
+			if (xhttp.status == 200) {
+				document.open();
+				document.write(xhttp.responseText);
+				document.close();
+			} else if (xhttp.status == 0) {
+				alert("Server closed the connection abruptly!");
+				location.reload()
+			} else {
+				alert(xhttp.status + " Error!\n" + xhttp.responseText);
+				location.reload()
+			}
+		}
+	}
+	
+	xhttp.open("POST", "mat/set_lcd", true);
+	xhttp.send(param);
+
+}
 </script>
 <body>
 <h1 align="center">Welcome to MAT Control Page</h1>
@@ -175,5 +233,15 @@ function lcd_show()
       <input name="textfield" type="text" id="lcd_str" size="30" maxlength="30" />
 </p>
 <p> <button id="mat_id_set" type="button" onclick="lcd_show()">Lcd Show Part Number</button> </p>
+
+<p>Input Weight:
+      <input name="textfield" type="text" id="lcd_str_weight" size="30" maxlength="30" />
+</p>
+<p> <button id="mat_id_set" type="button" onclick="lcd_show2()">Lcd Show Weight</button> </p>
+
+<p>Input Quality:
+      <input name="textfield" type="text" id="lcd_str_qty" size="30" maxlength="30" />
+</p>
+<p> <button id="mat_id_set" type="button" onclick="lcd_show3()">Lcd Show Quality</button> </p>
 </body>
 </html>
