@@ -121,14 +121,29 @@ esp_err_t init_fs(void)
 }
 #endif
 
+/*
+esp_err_t profile_init(void)
+{
+	FILE *fd = NULL;
+	fd = fopen(SYSTEM_CONF,"rt");
+	if(fd == NULL){
+		return ESP_FAIL;
+	}
+	hu_profile_getchar("SMARTBIN", "UUID", (char *)m_bin.str_uuid, fd);
+
+	fclose(fd);
+	return ESP_OK;
+}
+*/
+
 void app_main(void)
 {
+	uint8 card_exsit = 0;
 #if (SD_CARD_EN == 1)
 	sd_card_on();
+	card_exsit = sd_card_det();
 #endif
 
-	//A uart read/write example without event queue;
-    xTaskCreate(echo_task, "uart_echo_task", ECHO_TASK_STACK_SIZE, NULL, ECHO_TASK_PRIO, NULL);
 
     ESP_ERROR_CHECK(nvs_flash_init());
     tcpip_adapter_init();
@@ -137,13 +152,19 @@ void app_main(void)
 	
 //	ESP_LOGI(TAG, "ESP_WIFI_MODE_AP");
 //	wifi_init_softap();
+	if(card_exsit == 0)
+	{
+		ESP_ERROR_CHECK(init_fs());
+	}
 
 	ESP_ERROR_CHECK(example_connect());
-	ESP_ERROR_CHECK(init_fs());
 
-//	sd_rdwt_file("/www/user_config.txt");
+//	profile_init();
+
+	//A uart read/write example without event queue;
+    xTaskCreate(echo_task, "uart_echo_task", ECHO_TASK_STACK_SIZE, NULL, ECHO_TASK_PRIO, NULL);
 	
 	ESP_ERROR_CHECK(start_rest_server(CONFIG_EXAMPLE_WEB_MOUNT_POINT));
 	
-
 }
+

@@ -3,6 +3,7 @@ idf_component_register(SRCS "esp_rest_main.c"
                             "sd_card_user.c"
                             "rs485_example.c"
 							"softap_example_main.c"
+							"hu_profile.c"
                     INCLUDE_DIRS ".")
 
 if(CONFIG_EXAMPLE_WEB_DEPLOY_SF)

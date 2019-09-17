@@ -17,7 +17,7 @@
 
 // Read packet timeout
 #define PACKET_READ_TICS        (100 / portTICK_RATE_MS)		//100ms
-#define ECHO_TASK_STACK_SIZE    (2048)
+#define ECHO_TASK_STACK_SIZE    (20480)
 #define ECHO_TASK_PRIO          (10)
 #define ECHO_UART_PORT          (UART_NUM_2)
 
@@ -82,6 +82,8 @@ typedef struct
 	uint32	u32_single_id_tx;
 	uint32	u32_single_id_rx;
 }ST_CUBBY_BIN;
+
+extern ST_CUBBY_BIN	m_bin;
 
 void ESP_LOG_STR(uint8 * pstr, int len);
 

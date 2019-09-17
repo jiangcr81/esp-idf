@@ -5,6 +5,6 @@
 
 #define		SD_CARD_EN				1
 
-
+#define		HU_PROFILE_EN			1
 
 #endif

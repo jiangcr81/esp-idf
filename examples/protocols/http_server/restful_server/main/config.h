@@ -40,7 +40,11 @@ typedef union{
 #if (SD_CARD_EN == 1)
 #include "esp_vfs.h"
 #include "sd_card_user.h"
+#if (HU_PROFILE_EN == 1)
+#include "hu_profile.h"
 #endif
+#endif
+
 
 
 #define B00000000 0x00

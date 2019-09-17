@@ -32,10 +32,11 @@
 
 static const char *TAG = "RS485_ECHO_APP";
 
-static ST_CUBBY_BIN	m_bin;
+ST_CUBBY_BIN	m_bin;
 
 uint32	u32_mat_index;
 uint8	u8_mat_query_delay;
+uint8	u8_mat_peeling_cnt;
 
 void ESP_LOG_STR(uint8 * pstr, int len)
 {
@@ -276,8 +277,9 @@ void rs485_cmd_get_adc(uint8 idh, uint8 idl)
 	tx_sum = if_data_ckeck(tx_buf, tx_len-2);
 	tx_buf[tx_len-2] = (tx_sum>>8)&0xFF;
 	tx_buf[tx_len-1] = (tx_sum)&0xFF;
-
-//	ESP_LOG_STR(tx_buf, tx_len);
+	
+	ESP_LOGI(TAG, "TX:");
+	ESP_LOG_STR(tx_buf, tx_len);
 	uart_write_bytes(uart_num, (char *)tx_buf, tx_len);
 }
 
@@ -383,20 +385,107 @@ uint32 u8_3_uint32(uint8 u8h, uint8 u8m, uint8 u8l)
 void init_m_bin(void)
 {
 	uint8 i = 0, j = 0;
+	char buf[100];
+	float	f_wperadc = 0.93361;
+	if(sd_card_det()==0) {
+	FILE *fd = NULL;
+	fd = fopen(SYSTEM_CONF,"rt");
+	if(fd == NULL){
+		return;
+	}
+	if(hu_profile_getchar("EMBEDED", "WEIGHTPERADC", (char *)buf, fd) == 0) {
+		f_wperadc = atof(buf);
+	}
+	
+	
+	ESP_LOGI(TAG, "init_m_bin get param from TF Card.");
+	if(hu_profile_getchar("MATL1L", "UUID", (char *)buf, fd) == 0) {
+		m_bin.m_mat[0].u16_mat_id = atoi(buf);
+	}
+	if(hu_profile_getchar("MATL1L", "LCDID", (char *)buf, fd) == 0) {
+		m_bin.m_mat[0].u32_lcd_id = atoi(buf);
+	}
+
+	if(hu_profile_getchar("MATL1R", "UUID", (char *)buf, fd) == 0) {
+		m_bin.m_mat[1].u16_mat_id = atoi(buf);
+	}
+
+	if(hu_profile_getchar("MATL2L", "UUID", (char *)buf, fd) == 0) {
+		m_bin.m_mat[2].u16_mat_id = atoi(buf);
+	}
+	if(hu_profile_getchar("MATL2L", "LCDID", (char *)buf, fd) == 0) {
+		m_bin.m_mat[2].u32_lcd_id = atoi(buf);
+	}
+
+	if(hu_profile_getchar("MATL2R", "UUID", (char *)buf, fd) == 0) {
+		m_bin.m_mat[3].u16_mat_id = atoi(buf);
+	}
+
+	if(hu_profile_getchar("MATL3L", "UUID", (char *)buf, fd) == 0) {
+		m_bin.m_mat[4].u16_mat_id = atoi(buf);
+	}
+	if(hu_profile_getchar("MATL3L", "LCDID", (char *)buf, fd) == 0) {
+		m_bin.m_mat[4].u32_lcd_id = atoi(buf);
+	}
+
+	if(hu_profile_getchar("MATL3R", "UUID", (char *)buf, fd) == 0) {
+		m_bin.m_mat[5].u16_mat_id = atoi(buf);
+	}
+
+	if(hu_profile_getchar("MATL4L", "UUID", (char *)buf, fd) == 0) {
+		m_bin.m_mat[6].u16_mat_id = atoi(buf);
+	}
+	if(hu_profile_getchar("MATL4L", "LCDID", (char *)buf, fd) == 0) {
+		m_bin.m_mat[6].u32_lcd_id = atoi(buf);
+	}
+
+	if(hu_profile_getchar("MATL4R", "UUID", (char *)buf, fd) == 0) {
+		m_bin.m_mat[7].u16_mat_id = atoi(buf);
+	}
+
+	if(hu_profile_getchar("MATL5L", "UUID", (char *)buf, fd) == 0) {
+		m_bin.m_mat[8].u16_mat_id = atoi(buf);
+	}
+	if(hu_profile_getchar("MATL5L", "LCDID", (char *)buf, fd) == 0) {
+		m_bin.m_mat[8].u32_lcd_id = atoi(buf);
+	}
+	
+	if(hu_profile_getchar("MATL5R", "UUID", (char *)buf, fd) == 0) {
+		m_bin.m_mat[9].u16_mat_id = atoi(buf);
+	}
+
+	fclose(fd);
+	}
+	
 	for(i = 0; i<MAT_CNT_MAX; i++)
 	{
 		m_bin.m_mat[i].u16_mat_id = 0;
 		for(j = 0; j < 4; j++)
 		{
-			m_bin.m_mat[i].m_cubby[j].f_wperadc = 1.344189;
+			m_bin.m_mat[i].m_cubby[j].f_wperadc = f_wperadc;
 			m_bin.m_mat[i].m_cubby[j].f_single_weight = 12.5;
 			m_bin.m_mat[i].m_cubby[j].u32_adc_raw = 0;
-			m_bin.m_mat[i].m_cubby[j].u32_adc_peeling = 0;
+			m_bin.m_mat[i].m_cubby[j].u32_adc_peeling = 0x80000;
 			m_bin.m_mat[i].m_cubby[j].u8_led_status = 0;
 		}
 	}
+	/*
+	m_bin.m_mat[0].u16_mat_id = 1;
+	m_bin.m_mat[1].u16_mat_id = 2;
+	m_bin.m_mat[2].u16_mat_id = 3;
+	m_bin.m_mat[3].u16_mat_id = 4;
+	
+	m_bin.m_mat[2].u16_mat_id = 13;
+	m_bin.m_mat[3].u16_mat_id = 13;
+
+	*/
 }
 
+/*
+ * Set HT66F5242 MCU ID
+ * index: (0~9) physical index
+ * mat_id: (2Bytes) ID name for 485 communicate protocal. 
+ */
 void api_set_mat_id(uint8 index, uint32 mat_id)
 {
 	if(index < MAT_CNT_MAX)
@@ -492,12 +581,14 @@ void m_bin_update_lcd(uint8 index)
 	//	ESP_LOG_STR((uint8 *)lcd_buf, str_len);
 		rs485_cmd_lcd(idh, idl, lcd_type, str_len, lcd_buf, cubby_i);
 
+		/*
 		lcd_type = 0xA3;
 		memset(lcd_buf, 0, 8);
 		sprintf(lcd_buf, "%d", m_bin.m_mat[index].m_cubby[cubby_i-1].u32_current_qty);
 		str_len = strlen(lcd_buf);
 		
-	//	rs485_cmd_lcd(idh, idl, lcd_type, str_len, lcd_buf, cubby_i);
+		rs485_cmd_lcd(idh, idl, lcd_type, str_len, lcd_buf, cubby_i);
+		*/
 	}
 }
 
@@ -579,10 +670,12 @@ void rs485_get_mat_weight_next(void)
 			rs485_cmd_get_adc(idh, idl);
 		}
 		u32_mat_index++;
-		if(u32_mat_index > 3)
+		if(u32_mat_index > 9)
 		{
 			u32_mat_index = 0;
 		}
+	//	ESP_LOGI(TAG, "TX:");
+	//	ESP_LOG_STR(m_bin.str_uuid, sizeof(m_bin.str_uuid));
 	}
 }
 
@@ -646,6 +739,16 @@ void echo_task(void *arg)
 			if(u8_mat_query_delay > QUERY_DELAY_MAX)
 			{
 				u8_mat_query_delay = QUERY_DELAY_MAX;
+				u8_mat_peeling_cnt++;
+				if(u8_mat_peeling_cnt > 100)
+				{
+					u8_mat_peeling_cnt = 100;
+				}
+				else if((u8_mat_peeling_cnt > 50) && (u8_mat_peeling_cnt < 60))
+				{
+					u8_mat_peeling_cnt = 60;
+				//	api_peeling();
+				}
 			}
         }
         //*/

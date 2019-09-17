@@ -20,6 +20,7 @@
 #include "freertos/event_groups.h"
 #include "lwip/err.h"
 #include "lwip/sys.h"
+#include "config.h"
 
 #define GOT_IPV4_BIT BIT(0)
 #define GOT_IPV6_BIT BIT(1)
@@ -133,6 +134,20 @@ static void start(void)
             .password = CONFIG_EXAMPLE_WIFI_PASSWORD,
         },
     };
+#if (HU_PROFILE_EN == 1)
+	if(sd_card_det()==0) {
+
+	FILE *fd = NULL;
+	fd = fopen(SYSTEM_CONF, "rt");
+	if(fd == NULL){
+		return;
+	}
+	hu_profile_getchar("Network", "SSID", (char *)wifi_config.sta.ssid, fd);
+	hu_profile_getchar("Network", "Password", (char *)wifi_config.sta.password, fd);
+	ESP_LOGI(TAG, "Get WIFI SSID[%s]&PASSWORD[%s] From TF Card.", wifi_config.sta.ssid, wifi_config.sta.password);
+	fclose(fd);
+	}
+#endif
     ESP_LOGI(TAG, "Connecting to %s...", wifi_config.sta.ssid);
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
