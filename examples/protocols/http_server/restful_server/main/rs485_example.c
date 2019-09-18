@@ -36,12 +36,13 @@ ST_CUBBY_BIN	m_bin;
 
 uint32	u32_mat_index;
 uint8	u8_mat_query_delay;
-uint8	u8_mat_peeling_cnt;
+uint8	u8_g_mat_index;
+uint8	u8_g_lcdqty_need_update;
 
 void ESP_LOG_STR(uint8 * pstr, int len)
 {
-	ESP_LOGI(TAG, "ESP_LOG_STR %u bytes:", len);
-	printf("[ ");
+//	ESP_LOGI(TAG, "ESP_LOG_STR %u bytes:", len);
+	printf("len=%u[ ", len);
 	for (int i = 0; i < len; i++) {
 		printf("0x%.2X ", (uint8_t)pstr[i]);
 	}
@@ -171,6 +172,12 @@ void rs485_tx_package(uint8 type)
 	uart_write_bytes(uart_num, (char *)tx_buf, tx_len);
 }
 
+void rs485_tx_str(char * tx_buf, uint8 tx_len, uint16 delay_ms)
+{
+	int uart_num = ECHO_UART_PORT;
+	uart_write_bytes(uart_num, tx_buf, tx_len);
+}
+
 /*
 0x55 0x12 0x01 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x01 0x00 0x02 0x00 0x01 0x00 0x6C
 0x55 0x12 0x01 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0xFF 0x00 0x02 0x00 0x01 0x01 0x6A
@@ -278,8 +285,8 @@ void rs485_cmd_get_adc(uint8 idh, uint8 idl)
 	tx_buf[tx_len-2] = (tx_sum>>8)&0xFF;
 	tx_buf[tx_len-1] = (tx_sum)&0xFF;
 	
-	ESP_LOGI(TAG, "TX:");
-	ESP_LOG_STR(tx_buf, tx_len);
+//	ESP_LOGI(TAG, "TX:");
+//	ESP_LOG_STR(tx_buf, tx_len);
 	uart_write_bytes(uart_num, (char *)tx_buf, tx_len);
 }
 
@@ -323,7 +330,7 @@ void rs485_cmd_led(uint8 idh, uint8 idl, uint8 led_value)
 void rs485_cmd_lcd(uint8 idh, uint8 idl, uint8 type, uint8 len, char * cbuf, uint8 num)
 {
 	int uart_num = ECHO_UART_PORT;
-	uint8 tx_len = len+18, i;
+	uint8 tx_len = len+19, i;
 	uint16 tx_sum = 0;
 	uint8_t* tx_buf = (uint8_t*) malloc(tx_len+1);
 	u8_mat_query_delay = 0;
@@ -343,11 +350,12 @@ void rs485_cmd_lcd(uint8 idh, uint8 idl, uint8 type, uint8 len, char * cbuf, uin
 	tx_buf[11] = type;	//PTL_CMD_LCDA1
 	tx_buf[12] = 0x00;	//cmd type
 	tx_buf[13] = len+2;	//payload length
+	tx_buf[14] = num;
 	for(i=0; i<len; i++)
 	{
-		tx_buf[14+i] = cbuf[i];
+		tx_buf[15+i] = cbuf[i];
 	}
-	tx_buf[tx_len-4] = num;
+//	tx_buf[tx_len-4] = num;
 	
 	tx_sum = if_data_ckeck(tx_buf, tx_len-2);
 	tx_buf[tx_len-2] = (tx_sum>>8)&0xFF;
@@ -385,7 +393,7 @@ uint32 u8_3_uint32(uint8 u8h, uint8 u8m, uint8 u8l)
 void init_m_bin(void)
 {
 	uint8 i = 0, j = 0;
-	char buf[100];
+	char buf[100], cubbyname[16];
 	float	f_wperadc = 0.93361;
 	if(sd_card_det()==0) {
 	FILE *fd = NULL;
@@ -454,21 +462,34 @@ void init_m_bin(void)
 		m_bin.m_mat[9].u16_mat_id = atoi(buf);
 	}
 
-	fclose(fd);
-	}
-	
 	for(i = 0; i<MAT_CNT_MAX; i++)
 	{
-		m_bin.m_mat[i].u16_mat_id = 0;
 		for(j = 0; j < 4; j++)
 		{
 			m_bin.m_mat[i].m_cubby[j].f_wperadc = f_wperadc;
-			m_bin.m_mat[i].m_cubby[j].f_single_weight = 12.5;
+		//	m_bin.m_mat[i].m_cubby[j].f_single_weight = 12.5;
 			m_bin.m_mat[i].m_cubby[j].u32_adc_raw = 0;
-			m_bin.m_mat[i].m_cubby[j].u32_adc_peeling = 0x80000;
+		//	m_bin.m_mat[i].m_cubby[j].u32_adc_peeling = 0x80000;
 			m_bin.m_mat[i].m_cubby[j].u8_led_status = 0;
+
+			sprintf(cubbyname, "CubbyR%dC%d", (i/2)+1, ((i%2)*4)+j+1);
+			if(hu_profile_getchar(cubbyname, "ADC_PEELING", (char *)buf, fd) == 0){
+				m_bin.m_mat[i].m_cubby[j].u32_adc_peeling = atoi(buf);
+			} else {
+				m_bin.m_mat[i].m_cubby[j].u32_adc_peeling = 0x80000;
+			}
+
+			if(hu_profile_getchar(cubbyname, "WeightSingle", (char *)buf, fd) == 0){
+				m_bin.m_mat[i].m_cubby[j].f_single_weight = atof(buf);
+			} else {
+				m_bin.m_mat[i].m_cubby[j].f_single_weight = 12.5;
+			}
 		}
 	}
+
+	fclose(fd);
+	}
+	
 	/*
 	m_bin.m_mat[0].u16_mat_id = 1;
 	m_bin.m_mat[1].u16_mat_id = 2;
@@ -505,11 +526,18 @@ void api_set_mat_lcd_id(uint8 index, uint32 id)
 void api_peeling(void)
 {
 	uint8 i = 0, j = 0;
+	char value[16], cubbyname[16];
+	
 	for(i = 0; i<MAT_CNT_MAX; i++)
 	{
 		for(j = 0; j < 4; j++)
 		{
 			m_bin.m_mat[i].m_cubby[j].u32_adc_peeling = m_bin.m_mat[i].m_cubby[j].u32_adc_raw;
+
+			sprintf(cubbyname, "CubbyR%dC%d", (i/2)+1, ((i%2)*4)+j+1);
+			sprintf(value, "%d", m_bin.m_mat[i].m_cubby[j].u32_adc_raw);
+
+			hu_profile_setstr(cubbyname, "ADC_PEELING", value, SYSTEM_CONF);
 		}
 	}
 }
@@ -558,38 +586,55 @@ void m_bin_update(uint8 index)
 	}
 }
 
-void m_bin_update_lcd(uint8 index)
+void m_bin_update_lcd(uint8 index, uint8 type)
 {
-	uint8 idh=0, idl=0, lcd_type = 0xA1, str_len = 32, cubby_i = 1;
+	uint8 idh=0, idl=0, lcd_type = 0xA1, str_len = 32, cubby_i = 1, lcd_i = 0;
 	uint32 u32_mat_id = 0;
-	char lcd_buf[8];
+	char lcd_buf[50];
+	char buf0[8];
+	memset(lcd_buf, 0, 50);
 	
 	u32_mat_id = m_bin.m_mat[index].u32_lcd_id;
 	if(u32_mat_id > 0)
 	{
 		idh = (u32_mat_id>>8)&0xFF;
 		idl = u32_mat_id&0xFF;
-		cubby_i = 1;			//4ШЁгр
-		
-		lcd_type = 0xA2;
-		memset(lcd_buf, 0, 8);
-		sprintf(lcd_buf, "%.0fg", m_bin.m_mat[index].m_cubby[cubby_i-1].f_weight);
-	//	lcd_buf[5] = 'g';
-	//	lcd_buf[6] = 0;
-		str_len = strlen(lcd_buf);
+		for(cubby_i=0; cubby_i<4; cubby_i++)
+		{
+			if(type == 0xA2)
+			{
+				lcd_type = type;
+				memset(buf0, 0, 8);
+				sprintf(buf0, "%.0fg", m_bin.m_mat[index].m_cubby[cubby_i].f_weight);
+				str_len = strlen(buf0);
+				lcd_buf[lcd_i] = str_len;
+				memcpy(&lcd_buf[lcd_i+1], buf0, str_len);
+				lcd_i += (str_len+1);
+			}
+			else if(type == 0xA3)
+			{
+				lcd_type = type;
+				memset(buf0, 0, 8);
+				sprintf(buf0, "%d", m_bin.m_mat[index].m_cubby[cubby_i].u32_current_qty);
+				str_len = strlen(buf0);
+				lcd_buf[lcd_i] = str_len;
+				memcpy(&lcd_buf[lcd_i+1], buf0, str_len);
+				lcd_i += (str_len+1);
+			}
+		}
+		str_len = lcd_i;
 
 	//	ESP_LOG_STR((uint8 *)lcd_buf, str_len);
-		rs485_cmd_lcd(idh, idl, lcd_type, str_len, lcd_buf, cubby_i);
-
-		/*
-		lcd_type = 0xA3;
-		memset(lcd_buf, 0, 8);
-		sprintf(lcd_buf, "%d", m_bin.m_mat[index].m_cubby[cubby_i-1].u32_current_qty);
-		str_len = strlen(lcd_buf);
-		
-		rs485_cmd_lcd(idh, idl, lcd_type, str_len, lcd_buf, cubby_i);
-		*/
 	}
+	if(index%2 == 0)
+	{
+		cubby_i = 1;
+	}
+	else
+	{
+		cubby_i = 5;
+	}
+	rs485_cmd_lcd(idh, idl, lcd_type, str_len, lcd_buf, cubby_i);
 }
 
 /*
@@ -635,7 +680,10 @@ void rs485_parse_rx(uint8 * psrc, uint8 len)
 							m_bin.m_mat[u8_mat_index].m_cubby[2].u32_adc_raw = u8_3_uint32(psrc[20], psrc[21], psrc[22]);
 							m_bin.m_mat[u8_mat_index].m_cubby[3].u32_adc_raw = u8_3_uint32(psrc[23], psrc[24], psrc[25]);
 							m_bin_update(u8_mat_index);
-							m_bin_update_lcd(u8_mat_index);
+							m_bin_update_lcd(u8_mat_index, 0xA2);
+							u8_g_mat_index = u8_mat_index;
+							u8_g_lcdqty_need_update = 1;
+						//	m_bin_update_lcd(u8_mat_index, 0xA3);
 						//	ESP_LOGI(TAG,"[%d]cubby1:%d", u8_mat_index, m_bin.m_mat[u8_mat_index].m_cubby[0].u32_adc_raw);
 						//	ESP_LOGI(TAG,"[%d]cubby2:%d", u8_mat_index, m_bin.m_mat[u8_mat_index].m_cubby[1].u32_adc_raw);
 						//	ESP_LOGI(TAG,"[%d]cubby3:%d", u8_mat_index, m_bin.m_mat[u8_mat_index].m_cubby[2].u32_adc_raw);
@@ -668,14 +716,13 @@ void rs485_get_mat_weight_next(void)
 			idh = (u32_mat_id>>8)&0xFF;
 			idl = u32_mat_id&0xFF;
 			rs485_cmd_get_adc(idh, idl);
+			ESP_LOGI(TAG, "mat_id=%d", u32_mat_id);
 		}
 		u32_mat_index++;
 		if(u32_mat_index > 9)
 		{
 			u32_mat_index = 0;
 		}
-	//	ESP_LOGI(TAG, "TX:");
-	//	ESP_LOG_STR(m_bin.str_uuid, sizeof(m_bin.str_uuid));
 	}
 }
 
@@ -727,28 +774,25 @@ void echo_task(void *arg)
         //Write data back to UART
         if (len > 0) {
 			rs485_parse_rx(data, len);
-			ESP_LOGI(TAG, "RX:");
-			ESP_LOG_STR(data, len);
+		//	ESP_LOGI(TAG, "RX:");
+		//	ESP_LOG_STR(data, len);
         
         } else {
             // Echo a "." to show we are alive while we wait for input
             //uart_write_bytes(uart_num, ".", 1);
             // PACKET_READ_TICS Exec
+            if(u8_g_lcdqty_need_update == 1)
+            {
+				u8_g_lcdqty_need_update = 0;
+				m_bin_update_lcd(u8_g_mat_index, 0xA3);
+				u8_mat_query_delay = 0;
+            }
         	rs485_get_mat_weight_next();
 			u8_mat_query_delay++;
 			if(u8_mat_query_delay > QUERY_DELAY_MAX)
 			{
 				u8_mat_query_delay = QUERY_DELAY_MAX;
-				u8_mat_peeling_cnt++;
-				if(u8_mat_peeling_cnt > 100)
-				{
-					u8_mat_peeling_cnt = 100;
-				}
-				else if((u8_mat_peeling_cnt > 50) && (u8_mat_peeling_cnt < 60))
-				{
-					u8_mat_peeling_cnt = 60;
-				//	api_peeling();
-				}
+				
 			}
         }
         //*/
