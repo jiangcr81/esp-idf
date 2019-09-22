@@ -33,7 +33,7 @@ initializer that should be kept in sync
 */
 #define HTTPD_DEFAULT_CONFIG() {                        \
         .task_priority      = tskIDLE_PRIORITY+5,       \
-        .stack_size         = 4096,                     \
+        .stack_size         = 40960,                     \
         .core_id            = tskNO_AFFINITY,           \
         .server_port        = 80,                       \
         .ctrl_port          = 32768,                    \
