@@ -6,8 +6,11 @@
 #include <stdio.h>
 #include "stdlib.h"
 #include "string.h"
+#include "esp_log.h"
 
 #include "hu_profile.h"
+
+static const char *TAG = "PROFILE";
 
 /*
  * 从文件流中读取组名关键字
@@ -240,22 +243,35 @@ int hu_profile_getchar(char *sect, char *key, char *val, FILE *fp)
  */
 int hu_profile_setstr(char *sect, char *key, char *val, char *fname)
 {
-	char buf[MAX_LEN];  /* a line read from ini file */
+	char buf[MAX_LEN];  /* one line read from profile */
 	char s[MAX_KEY_LEN];
 	int  len, j, i, ret=0;
 	FILE *fnow, *fnew;
+	char newfname[32];
+	memset(newfname, 0, 32);
+	if(fname[0] == '/')
+	{
+		memcpy(newfname, fname, strlen(fname));
+	}
+	else
+	{
+		sprintf(newfname, "/www/%s.conf", fname);
+	}
 
-	fnow = fopen(fname, "r");
+	fnow = fopen(newfname, "r");
 	if (fnow==NULL)
 	{  // file not exists, create one
-		fnow = fopen(fname, "w");
+		ESP_LOGI(TAG, "[%s]file not exists, create one", newfname);
+		fnow = fopen(newfname, "w");
 		if (fnow == NULL)
 		{
+			ESP_LOGI(TAG, "Create file[%s] fail!!!", newfname);
 			ret = -1;
 			goto unlock_exit;
 		}
 		fclose(fnow);
-		fnow=fopen(fname, "r");
+		fnow=fopen(newfname, "r");
+		ESP_LOGI(TAG, "Open file[%s] sucessed.", newfname);
 	}
 	
 	// skip the un-changed items to enhance the performance
@@ -275,7 +291,7 @@ int hu_profile_setstr(char *sect, char *key, char *val, char *fname)
 	if (fnew==NULL)
 	{
 		// file not exists, create one
-		fnew = fopen(TEMP_CONF_FILE,"w");
+		fnew = fopen(TEMP_CONF_FILE, "w");
 		if (fnew == NULL)
 		{
 			ret = -1;
@@ -376,8 +392,8 @@ save_rest:
 					fclose(fnew);
 					fclose(fnow);
 					//删除旧文件，重命名新文件
-					remove(SYSTEM_CONF);
-					rename(TEMP_CONF_FILE, SYSTEM_CONF);
+					remove(newfname);
+					rename(TEMP_CONF_FILE, newfname);
 				//	sprintf(buf,"/bin/cp -f %s %s > /dev/null 2> /dev/null",TEMP_CONF_FILE,fname);
 				//	system(buf);
 				//	sync();
@@ -438,8 +454,8 @@ exit0:
 	fclose(fnow);
 	fclose(fnew);
 	//删除旧文件，重命名新文件
-	remove(SYSTEM_CONF);
-	rename(TEMP_CONF_FILE, SYSTEM_CONF);
+	remove(newfname);
+	rename(TEMP_CONF_FILE, newfname);
 //	sprintf(buf,"/bin/cp -f %s %s >/dev/null 2> /dev/null",TEMP_CONF_FILE,fname);
 //	system(buf);
 //	sync();

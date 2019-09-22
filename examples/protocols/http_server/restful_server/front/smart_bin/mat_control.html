@@ -173,6 +173,90 @@ function lcd_show3()
 	xhttp.send(param);
 
 }
+
+function lcd_show4()
+{
+	var mat_id = document.getElementById("mat_id_set_input").value;
+	var lcd_num = document.getElementById("lcd_num").value;
+	
+	var param = "mat_id="+mat_id+"&lcd_type=164"+"&lcd_num="+lcd_num+"&lcd_mode=0&bg_mode=1";
+	var xhttp = new XMLHttpRequest();
+	xhttp.onreadystatechange = function() {
+		if (xhttp.readyState == 4) {
+			if (xhttp.status == 200) {
+				document.open();
+				document.write(xhttp.responseText);
+				document.close();
+			} else if (xhttp.status == 0) {
+				alert("Server closed the connection abruptly!");
+				location.reload()
+			} else {
+				alert(xhttp.status + " Error!\n" + xhttp.responseText);
+				location.reload()
+			}
+		}
+	}
+	
+	xhttp.open("POST", "mat/set_lcd", true);
+	xhttp.send(param);
+
+}
+
+function lcd_show5()
+{
+	var mat_id = document.getElementById("mat_id_set_input").value;
+	var lcd_num = document.getElementById("lcd_num").value;
+	
+	var param = "mat_id="+mat_id+"&lcd_type=164"+"&lcd_num="+lcd_num+"&lcd_mode=1&bg_mode=1";
+	var xhttp = new XMLHttpRequest();
+	xhttp.onreadystatechange = function() {
+		if (xhttp.readyState == 4) {
+			if (xhttp.status == 200) {
+				document.open();
+				document.write(xhttp.responseText);
+				document.close();
+			} else if (xhttp.status == 0) {
+				alert("Server closed the connection abruptly!");
+				location.reload()
+			} else {
+				alert(xhttp.status + " Error!\n" + xhttp.responseText);
+				location.reload()
+			}
+		}
+	}
+	
+	xhttp.open("POST", "mat/set_lcd", true);
+	xhttp.send(param);
+
+}
+
+function lcd_show6()
+{
+	var mat_id = document.getElementById("mat_id_set_input").value;
+	var lcd_num = document.getElementById("lcd_num").value;
+	
+	var param = "mat_id="+mat_id+"&lcd_type=164"+"&lcd_num="+lcd_num+"&lcd_mode=0&bg_mode=0";
+	var xhttp = new XMLHttpRequest();
+	xhttp.onreadystatechange = function() {
+		if (xhttp.readyState == 4) {
+			if (xhttp.status == 200) {
+				document.open();
+				document.write(xhttp.responseText);
+				document.close();
+			} else if (xhttp.status == 0) {
+				alert("Server closed the connection abruptly!");
+				location.reload()
+			} else {
+				alert(xhttp.status + " Error!\n" + xhttp.responseText);
+				location.reload()
+			}
+		}
+	}
+	
+	xhttp.open("POST", "mat/set_lcd", true);
+	xhttp.send(param);
+
+}
 </script>
 <body>
 <h1 align="center">Welcome to MAT Control Page</h1>
@@ -233,6 +317,9 @@ function lcd_show3()
       <input name="textfield" type="text" id="lcd_str" size="30" maxlength="30" />
 </p>
 <p> <button id="mat_id_set" type="button" onclick="lcd_show()">Lcd Show Part Number</button> </p>
+<p> <button id="mat_id_set" type="button" onclick="lcd_show4()">Show Part Number as Charactor</button> </p>
+<p> <button id="mat_id_set" type="button" onclick="lcd_show5()">Show Part Number as BarCode</button> </p>
+<p> <button id="mat_id_set" type="button" onclick="lcd_show6()">Set LCD backlight Off</button> </p>
 
 <p>Input Weight:
       <input name="textfield" type="text" id="lcd_str_weight" size="30" maxlength="30" />

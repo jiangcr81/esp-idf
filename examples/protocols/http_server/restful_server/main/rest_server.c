@@ -36,8 +36,9 @@ typedef struct rest_server_context {
 
 #define CHECK_FILE_EXTENSION(filename, ext) (strcasecmp(&filename[strlen(filename) - strlen(ext)], ext) == 0)
 
-static char *http_cgi_params[16];
-static char *http_cgi_param_vals[16];
+#define		PARAM_CNT_MAX		32
+static char *http_cgi_params[PARAM_CNT_MAX];
+static char *http_cgi_param_vals[PARAM_CNT_MAX];
 
 static int
 parse_uri_parameters(char *params)
@@ -56,7 +57,7 @@ parse_uri_parameters(char *params)
 
   /* Parse up to LWIP_HTTPD_MAX_CGI_PARAMETERS from the passed string and ignore the
    * remainder (if any) */
-  for (loop = 0; (loop < 16) && pair; loop++) {
+  for (loop = 0; (loop < PARAM_CNT_MAX) && pair; loop++) {
 
     /* Save the name of the parameter */
     http_cgi_params[loop] = pair;
@@ -333,7 +334,7 @@ static esp_err_t mat_get_id_handler(httpd_req_t *req)
 
 	for(int i=0; i<param_len; i++)
 	{
-		ESP_LOGI(REST_TAG, "http_cgi_params[%d]=%s,http_cgi_param_vals[%d]=%s\r\n",i,http_cgi_params[i],i,http_cgi_param_vals[i]);
+	//	ESP_LOGI(REST_TAG, "http_cgi_params[%d]=%s,http_cgi_param_vals[%d]=%s\r\n",i,http_cgi_params[i],i,http_cgi_param_vals[i]);
 
 		if(strncmp(http_cgi_params[i],"mcu_type", 8) == 0)
 		{
@@ -386,7 +387,7 @@ static esp_err_t mat_set_id_handler(httpd_req_t *req)
 
 	for(int i=0; i<param_len; i++)
 	{
-		ESP_LOGI(REST_TAG, "http_cgi_params[%d]=%s,http_cgi_param_vals[%d]=%s\r\n",i,http_cgi_params[i],i,http_cgi_param_vals[i]);
+	//	ESP_LOGI(REST_TAG, "http_cgi_params[%d]=%s,http_cgi_param_vals[%d]=%s\r\n",i,http_cgi_params[i],i,http_cgi_param_vals[i]);
 
 		if(strncmp(http_cgi_params[i],"mat_id", 6) == 0)
 		{
@@ -442,7 +443,7 @@ static esp_err_t mat_set_led_handler(httpd_req_t *req)
 
 	for(int i=0; i<param_len; i++)
 	{
-		ESP_LOGI(REST_TAG, "http_cgi_params[%d]=%s,http_cgi_param_vals[%d]=%s\r\n",i,http_cgi_params[i],i,http_cgi_param_vals[i]);
+	//	ESP_LOGI(REST_TAG, "http_cgi_params[%d]=%s,http_cgi_param_vals[%d]=%s\r\n",i,http_cgi_params[i],i,http_cgi_param_vals[i]);
 
 		if(strncmp(http_cgi_params[i],"mat_id", 6) == 0)
 		{
@@ -455,7 +456,7 @@ static esp_err_t mat_set_led_handler(httpd_req_t *req)
 			led_value = atoi(http_cgi_param_vals[i]);
 		}
 	}
-	ESP_LOGI(REST_TAG, "mat_id=%u,idh=%d, idl=%d, led_value=%d\r\n", u32_mat_id, idh, idl, led_value);
+//	ESP_LOGI(REST_TAG, "mat_id=%u,idh=%d, idl=%d, led_value=%d\r\n", u32_mat_id, idh, idl, led_value);
 
 	rs485_cmd_led(idh, idl, led_value);
 
@@ -474,6 +475,9 @@ static esp_err_t wifi_set_param_handler(httpd_req_t *req)
 	int cur_len = 0;
 	uint8 param_len=0;
 	uint32 u32_mat_id = 0;
+	uint8 u8_cubby_index = 0;
+	uint8 cmd_index = 0;
+	ST_CUBBY one_cubby;
 	char *buf = ((rest_server_context_t *)(req->user_ctx))->scratch;
 
 	int received = 0;
@@ -499,12 +503,12 @@ static esp_err_t wifi_set_param_handler(httpd_req_t *req)
 
 	for(int i=0; i<param_len; i++)
 	{
-		ESP_LOGI(REST_TAG, "http_cgi_params[%d]=%s,http_cgi_param_vals[%d]=%s\r\n",i,http_cgi_params[i],i,http_cgi_param_vals[i]);
+	//	ESP_LOGI(REST_TAG, "http_cgi_params[%d]=%s,http_cgi_param_vals[%d]=%s\r\n",i,http_cgi_params[i],i,http_cgi_param_vals[i]);
 
 		if(strncmp(http_cgi_params[i],"midl1", 5) == 0)
 		{
 			u32_mat_id = atoi(http_cgi_param_vals[i]);
-			if(u32_mat_id > 0)
+		//	if(u32_mat_id > 0)
 			{
 				api_set_mat_id(0, u32_mat_id);
 			}
@@ -512,31 +516,79 @@ static esp_err_t wifi_set_param_handler(httpd_req_t *req)
 		else if(strncmp(http_cgi_params[i],"midr1", 5) == 0)
 		{
 			u32_mat_id = atoi(http_cgi_param_vals[i]);
-			if(u32_mat_id > 0)
+		//	if(u32_mat_id > 0)
 			{
 				api_set_mat_id(1, u32_mat_id);
+			}
+		}
+		else if(strncmp(http_cgi_params[i],"midl2", 5) == 0)
+		{
+			u32_mat_id = atoi(http_cgi_param_vals[i]);
+		//	if(u32_mat_id > 0)
+			{
+				api_set_mat_id(2, u32_mat_id);
+			}
+		}
+		else if(strncmp(http_cgi_params[i],"midr2", 5) == 0)
+		{
+			u32_mat_id = atoi(http_cgi_param_vals[i]);
+		//	if(u32_mat_id > 0)
+			{
+				api_set_mat_id(3, u32_mat_id);
+			}
+		}
+		else if(strncmp(http_cgi_params[i],"midl3", 5) == 0)
+		{
+			u32_mat_id = atoi(http_cgi_param_vals[i]);
+		//	if(u32_mat_id > 0)
+			{
+				api_set_mat_id(4, u32_mat_id);
+			}
+		}
+		else if(strncmp(http_cgi_params[i],"midr3", 5) == 0)
+		{
+			u32_mat_id = atoi(http_cgi_param_vals[i]);
+		//	if(u32_mat_id > 0)
+			{
+				api_set_mat_id(5, u32_mat_id);
+			}
+		}
+		else if(strncmp(http_cgi_params[i],"midl4", 5) == 0)
+		{
+			u32_mat_id = atoi(http_cgi_param_vals[i]);
+		//	if(u32_mat_id > 0)
+			{
+				api_set_mat_id(6, u32_mat_id);
+			}
+		}
+		else if(strncmp(http_cgi_params[i],"midr4", 5) == 0)
+		{
+			u32_mat_id = atoi(http_cgi_param_vals[i]);
+		//	if(u32_mat_id > 0)
+			{
+				api_set_mat_id(7, u32_mat_id);
 			}
 		}
 		else if(strncmp(http_cgi_params[i],"midl5", 5) == 0)
 		{
 			u32_mat_id = atoi(http_cgi_param_vals[i]);
-			if(u32_mat_id > 0)
+		//	if(u32_mat_id > 0)
 			{
-				api_set_mat_id(2, u32_mat_id);
+				api_set_mat_id(8, u32_mat_id);
 			}
 		}
 		else if(strncmp(http_cgi_params[i],"midr5", 5) == 0)
 		{
 			u32_mat_id = atoi(http_cgi_param_vals[i]);
-			if(u32_mat_id > 0)
+		//	if(u32_mat_id > 0)
 			{
-				api_set_mat_id(3, u32_mat_id);
+				api_set_mat_id(9, u32_mat_id);
 			}
 		}
 		else if(strncmp(http_cgi_params[i],"lcdl1", 5) == 0)
 		{
 			u32_mat_id = atoi(http_cgi_param_vals[i]);
-			if(u32_mat_id > 0)
+		//	if(u32_mat_id > 0)
 			{
 				api_set_mat_lcd_id(0, u32_mat_id);
 			}
@@ -544,25 +596,73 @@ static esp_err_t wifi_set_param_handler(httpd_req_t *req)
 		else if(strncmp(http_cgi_params[i],"lcdr1", 5) == 0)
 		{
 			u32_mat_id = atoi(http_cgi_param_vals[i]);
-			if(u32_mat_id > 0)
+		//	if(u32_mat_id > 0)
 			{
 				api_set_mat_lcd_id(1, u32_mat_id);
+			}
+		}
+		else if(strncmp(http_cgi_params[i],"lcdl2", 5) == 0)
+		{
+			u32_mat_id = atoi(http_cgi_param_vals[i]);
+		//	if(u32_mat_id > 0)
+			{
+				api_set_mat_lcd_id(2, u32_mat_id);
+			}
+		}
+		else if(strncmp(http_cgi_params[i],"lcdr2", 5) == 0)
+		{
+			u32_mat_id = atoi(http_cgi_param_vals[i]);
+		//	if(u32_mat_id > 0)
+			{
+				api_set_mat_lcd_id(3, u32_mat_id);
+			}
+		}
+		else if(strncmp(http_cgi_params[i],"lcdl3", 5) == 0)
+		{
+			u32_mat_id = atoi(http_cgi_param_vals[i]);
+		//	if(u32_mat_id > 0)
+			{
+				api_set_mat_lcd_id(4, u32_mat_id);
+			}
+		}
+		else if(strncmp(http_cgi_params[i],"lcdr3", 5) == 0)
+		{
+			u32_mat_id = atoi(http_cgi_param_vals[i]);
+		//	if(u32_mat_id > 0)
+			{
+				api_set_mat_lcd_id(5, u32_mat_id);
+			}
+		}
+		else if(strncmp(http_cgi_params[i],"lcdl4", 5) == 0)
+		{
+			u32_mat_id = atoi(http_cgi_param_vals[i]);
+		//	if(u32_mat_id > 0)
+			{
+				api_set_mat_lcd_id(6, u32_mat_id);
+			}
+		}
+		else if(strncmp(http_cgi_params[i],"lcdr4", 5) == 0)
+		{
+			u32_mat_id = atoi(http_cgi_param_vals[i]);
+		//	if(u32_mat_id > 0)
+			{
+				api_set_mat_lcd_id(7, u32_mat_id);
 			}
 		}
 		else if(strncmp(http_cgi_params[i],"lcdl5", 5) == 0)
 		{
 			u32_mat_id = atoi(http_cgi_param_vals[i]);
-			if(u32_mat_id > 0)
+		//	if(u32_mat_id > 0)
 			{
-				api_set_mat_lcd_id(2, u32_mat_id);
+				api_set_mat_lcd_id(8, u32_mat_id);
 			}
 		}
 		else if(strncmp(http_cgi_params[i],"lcdr5", 5) == 0)
 		{
 			u32_mat_id = atoi(http_cgi_param_vals[i]);
-			if(u32_mat_id > 0)
+		//	if(u32_mat_id > 0)
 			{
-				api_set_mat_lcd_id(3, u32_mat_id);
+				api_set_mat_lcd_id(9, u32_mat_id);
 			}
 		}
 		else if(strncmp(http_cgi_params[i],"peeling_all", 11) == 0)
@@ -572,12 +672,92 @@ static esp_err_t wifi_set_param_handler(httpd_req_t *req)
 				api_peeling();
 			}
 		}
+		else if(strncmp(http_cgi_params[i],"update_cubby_info", 17) == 0)
+		{
+			if(strncmp(http_cgi_param_vals[i],"true", 4) == 0)
+			{
+				cmd_index = 1;
+			}
+		}
+		else if(strncmp(http_cgi_params[i],"mat_id", 6) == 0)
+		{
+			u32_mat_id = atoi(http_cgi_param_vals[i]);
+		}
+		else if(strncmp(http_cgi_params[i],"cubby_index", 11) == 0)
+		{
+			u8_cubby_index = atoi(http_cgi_param_vals[i]);
+		}
+		else if(strncmp(http_cgi_params[i],"location_id", 11) == 0)
+		{
+			cur_len = strlen(http_cgi_param_vals[i]);
+			if(cur_len > 60) cur_len = 60;
+			memcpy(one_cubby.str_location_id, http_cgi_param_vals[i], cur_len);
+			one_cubby.str_location_id[cur_len] = 0;
+		}
+		else if(strncmp(http_cgi_params[i],"product_num", 11) == 0)
+		{
+			cur_len = strlen(http_cgi_param_vals[i]);
+			if(cur_len > 30) cur_len = 30;
+			memcpy(one_cubby.str_product_num, http_cgi_param_vals[i], cur_len);
+			one_cubby.str_product_num[cur_len] = 0;
+		}
+		else if(strncmp(http_cgi_params[i],"desc1", 5) == 0)
+		{
+			cur_len = strlen(http_cgi_param_vals[i]);
+			if(cur_len > 30) cur_len = 30;
+			memcpy(one_cubby.str_desc1, http_cgi_param_vals[i], cur_len);
+			one_cubby.str_desc1[cur_len] = 0;
+		}
+		else if(strncmp(http_cgi_params[i],"desc2", 5) == 0)
+		{
+			cur_len = strlen(http_cgi_param_vals[i]);
+			if(cur_len > 30) cur_len = 30;
+			memcpy(one_cubby.str_desc2, http_cgi_param_vals[i], cur_len);
+			one_cubby.str_desc2[cur_len] = 0;
+		}
+		else if(strncmp(http_cgi_params[i],"picture", 7) == 0)
+		{
+			cur_len = strlen(http_cgi_param_vals[i]);
+			if(cur_len > 30) cur_len = 30;
+			memcpy(one_cubby.str_picture, http_cgi_param_vals[i], cur_len);
+			one_cubby.str_picture[cur_len] = 0;
+		}
+		else if(strncmp(http_cgi_params[i],"min_qty", 7) == 0)
+		{
+			one_cubby.u32_min_qty = atoi(http_cgi_param_vals[i]);
+		}
+		else if(strncmp(http_cgi_params[i],"max_qty", 7) == 0)
+		{
+			one_cubby.u32_max_qty = atoi(http_cgi_param_vals[i]);
+		}
+		else if(strncmp(http_cgi_params[i],"reorder_qty", 11) == 0)
+		{
+			one_cubby.u32_reorder_qty = atoi(http_cgi_param_vals[i]);
+		}
+		else if(strncmp(http_cgi_params[i],"single_weight", 13) == 0)
+		{
+			one_cubby.f_single_weight = atof(http_cgi_param_vals[i]);
+		}
+		else if(strncmp(http_cgi_params[i],"weight_per_adc", 14) == 0)
+		{
+			one_cubby.f_wperadc = atof(http_cgi_param_vals[i]);
+		}
+	}
+
+	if(cmd_index == 1)
+	{
+		api_update_cubby_info(u32_mat_id, u8_cubby_index, one_cubby);
 	}
 
 	/* Redirect onto root to see the updated file list */
 	httpd_resp_set_status(req, HTTPD_200);
 //	httpd_resp_set_hdr(req, "Location", "self.reload()");
-	httpd_resp_sendstr(req, "Assign system mat Id array successfully");
+	if(cmd_index == 0)
+	{
+		httpd_resp_sendstr(req, "Assign system mat Id array successfully");
+	} else if(cmd_index == 1) {
+		httpd_resp_sendstr(req, "Update Cubby information successfully");
+	}
 
     return ESP_OK;
 }
@@ -587,7 +767,7 @@ static esp_err_t mat_set_lcd_handler(httpd_req_t *req)
 {
 	int total_len = req->content_len;
 	int cur_len = 0;
-	uint8 param_len=0, idh=0, idl=0, lcd_type = 0xA1, str_len = 32, cubby_i = 1;
+	uint8 param_len=0, idh=0, idl=0, lcd_type = 0xA1, str_len = 32, cubby_i = 1, lcd_mode = 0, bg_mode = 1;
 	uint32 u32_mat_id = 0;
 	char *lcd_buf = NULL;
 	char *buf = ((rest_server_context_t *)(req->user_ctx))->scratch;
@@ -615,7 +795,7 @@ static esp_err_t mat_set_lcd_handler(httpd_req_t *req)
 
 	for(int i=0; i<param_len; i++)
 	{
-		ESP_LOGI(REST_TAG, "http_cgi_params[%d]=%s,http_cgi_param_vals[%d]=%s\r\n",i,http_cgi_params[i],i,http_cgi_param_vals[i]);
+	//	ESP_LOGI(REST_TAG, "http_cgi_params[%d]=%s,http_cgi_param_vals[%d]=%s\r\n",i,http_cgi_params[i],i,http_cgi_param_vals[i]);
 
 		if(strncmp(http_cgi_params[i],"mat_id", 6) == 0)
 		{
@@ -636,15 +816,23 @@ static esp_err_t mat_set_lcd_handler(httpd_req_t *req)
 		{
 			cubby_i = atoi(http_cgi_param_vals[i]);
 		}
+		else if(strncmp(http_cgi_params[i],"lcd_mode", 8) == 0)
+		{
+			lcd_mode = atoi(http_cgi_param_vals[i]);
+		}
+		else if(strncmp(http_cgi_params[i],"bg_mode", 7) == 0)
+		{
+			bg_mode = atoi(http_cgi_param_vals[i]);
+		}
 	}
 
-	rs485_cmd_lcd(idh, idl, lcd_type, str_len, lcd_buf, cubby_i);
+	rs485_cmd_lcd(idh, idl, lcd_type, str_len, lcd_buf, cubby_i, lcd_mode, bg_mode);
 
 
 	/* Redirect onto root to see the updated file list */
 	httpd_resp_set_status(req, HTTPD_200);
 //	httpd_resp_set_hdr(req, "Location", "self.reload()");
-//	httpd_resp_sendstr(req, "Set Cubby LED successfully");
+	httpd_resp_sendstr(req, "Set Cubby LED successfully");
 
     return ESP_OK;
 }

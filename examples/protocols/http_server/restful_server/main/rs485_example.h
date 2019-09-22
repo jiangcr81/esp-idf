@@ -51,7 +51,7 @@ typedef struct
 	float	f_weight;				//总重量
 	float	f_single_weight;		//单个重量
 	uint32	u32_current_qty;		//总个数
-	uint8	u8_picture[30];
+	uint8	str_picture[30];
 	uint32	u32_adc_raw;			//ADC原始值
 	uint32	u32_adc_peeling;		//ADC去皮值
 	uint8	u8_led_status;			//LED指示灯
@@ -94,13 +94,14 @@ void rs485_tx_package(uint8 type);
 void rs485_cmd_led(uint8 idh, uint8 idl, uint8 led_value);
 void rs485_cmd_set_id(uint8 mcu_type, uint8 idh, uint8 idl);
 void rs485_cmd_get_id(uint8 mcu_type);
-void rs485_cmd_lcd(uint8 idh, uint8 idl, uint8 type, uint8 len, char * cbuf, uint8 num);
+void rs485_cmd_lcd(uint8 idh, uint8 idl, uint8 type, uint8 len, char * cbuf, uint8 num, uint8 mode, uint8 bg);
 
 uint32 api_get_adc_raw(uint16 mat_id, uint8 cubby_index);
 uint32 api_get_id();
 void api_set_mat_id(uint8 index, uint32 mat_id);
 void api_set_mat_lcd_id(uint8 index, uint32 id);
 void api_peeling(void);
+void api_update_cubby_info(uint32 mat_id, uint8 cubby_index, ST_CUBBY cubby);
 
 
 #endif

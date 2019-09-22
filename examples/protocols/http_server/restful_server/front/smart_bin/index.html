@@ -138,6 +138,92 @@ function reload_all_item()
 		document.getElementById("CubbyR1C8").disabled = true;
 	}
 }
+
+function update_cubby_info()
+{
+	var mat_id = 0;
+	var cubby_index = 0;
+	if(document.getElementById("CubbyR1C1").checked) {mat_id = 0; cubby_index = 0;}
+	if(document.getElementById("CubbyR1C2").checked) {mat_id = 0; cubby_index = 1;}
+	if(document.getElementById("CubbyR1C3").checked) {mat_id = 0; cubby_index = 2;}
+	if(document.getElementById("CubbyR1C4").checked) {mat_id = 0; cubby_index = 3;}
+	if(document.getElementById("CubbyR1C5").checked) {mat_id = 1; cubby_index = 0;}
+	if(document.getElementById("CubbyR1C6").checked) {mat_id = 1; cubby_index = 1;}
+	if(document.getElementById("CubbyR1C7").checked) {mat_id = 1; cubby_index = 2;}
+	if(document.getElementById("CubbyR1C8").checked) {mat_id = 1; cubby_index = 3;}
+	
+	if(document.getElementById("CubbyR2C1").checked) {mat_id = 2; cubby_index = 0;}
+	if(document.getElementById("CubbyR2C2").checked) {mat_id = 2; cubby_index = 1;}
+	if(document.getElementById("CubbyR2C3").checked) {mat_id = 2; cubby_index = 2;}
+	if(document.getElementById("CubbyR2C4").checked) {mat_id = 2; cubby_index = 3;}
+	if(document.getElementById("CubbyR2C5").checked) {mat_id = 3; cubby_index = 0;}
+	if(document.getElementById("CubbyR2C6").checked) {mat_id = 3; cubby_index = 1;}
+	if(document.getElementById("CubbyR2C7").checked) {mat_id = 3; cubby_index = 2;}
+	if(document.getElementById("CubbyR2C8").checked) {mat_id = 3; cubby_index = 3;}
+	
+	if(document.getElementById("CubbyR3C1").checked) {mat_id = 4; cubby_index = 0;}
+	if(document.getElementById("CubbyR3C2").checked) {mat_id = 4; cubby_index = 1;}
+	if(document.getElementById("CubbyR3C3").checked) {mat_id = 4; cubby_index = 2;}
+	if(document.getElementById("CubbyR3C4").checked) {mat_id = 4; cubby_index = 3;}
+	if(document.getElementById("CubbyR3C5").checked) {mat_id = 5; cubby_index = 0;}
+	if(document.getElementById("CubbyR3C6").checked) {mat_id = 5; cubby_index = 1;}
+	if(document.getElementById("CubbyR3C7").checked) {mat_id = 5; cubby_index = 2;}
+	if(document.getElementById("CubbyR3C8").checked) {mat_id = 5; cubby_index = 3;}
+	
+	if(document.getElementById("CubbyR4C1").checked) {mat_id = 6; cubby_index = 0;}
+	if(document.getElementById("CubbyR4C2").checked) {mat_id = 6; cubby_index = 1;}
+	if(document.getElementById("CubbyR4C3").checked) {mat_id = 6; cubby_index = 2;}
+	if(document.getElementById("CubbyR4C4").checked) {mat_id = 6; cubby_index = 3;}
+	if(document.getElementById("CubbyR4C5").checked) {mat_id = 7; cubby_index = 0;}
+	if(document.getElementById("CubbyR4C6").checked) {mat_id = 7; cubby_index = 1;}
+	if(document.getElementById("CubbyR4C7").checked) {mat_id = 7; cubby_index = 2;}
+	if(document.getElementById("CubbyR4C8").checked) {mat_id = 7; cubby_index = 3;}
+	
+	if(document.getElementById("CubbyR5C1").checked) {mat_id = 8; cubby_index = 0;}
+	if(document.getElementById("CubbyR5C2").checked) {mat_id = 8; cubby_index = 1;}
+	if(document.getElementById("CubbyR5C3").checked) {mat_id = 8; cubby_index = 2;}
+	if(document.getElementById("CubbyR5C4").checked) {mat_id = 8; cubby_index = 3;}
+	if(document.getElementById("CubbyR5C5").checked) {mat_id = 9; cubby_index = 0;}
+	if(document.getElementById("CubbyR5C6").checked) {mat_id = 9; cubby_index = 1;}
+	if(document.getElementById("CubbyR5C7").checked) {mat_id = 9; cubby_index = 2;}
+	if(document.getElementById("CubbyR5C8").checked) {mat_id = 9; cubby_index = 3;}
+	
+	var location_id = document.getElementById("location_id").value;
+	var product_num = document.getElementById("product_num").value;
+	var desc1 = document.getElementById("desc1").value;
+	var desc2 = document.getElementById("desc2").value;
+	var min_qty = document.getElementById("min_qty").value;
+	var max_qty = document.getElementById("max_qty").value;
+	var reorder_qty = document.getElementById("reorder_qty").value;
+	var picture = document.getElementById("picture").value;
+	var single_weight = document.getElementById("single_weight").value;
+	var weight_per_adc = document.getElementById("weight_per_adc").value;
+	
+	var param1 = "update_cubby_info=true&mat_id="+mat_id+"&cubby_index="+cubby_index;
+	var param2 = "&location_id="+location_id+"&product_num="+product_num+"&desc1="+desc1+"&desc2="+desc2;
+	var param3 = "&min_qty="+min_qty+"&max_qty="+max_qty+"&reorder_qty="+reorder_qty+"&picture="+picture;
+	var param4 = "&single_weight="+single_weight+"&weight_per_adc="+weight_per_adc;
+	var xhttp = new XMLHttpRequest();
+	xhttp.onreadystatechange = function() {
+		if (xhttp.readyState == 4) {
+			if (xhttp.status == 200) {
+				document.open();
+				document.write(xhttp.responseText);
+				document.close();
+			} else if (xhttp.status == 0) {
+				alert("Server closed the connection abruptly!");
+				location.reload()
+			} else {
+				alert(xhttp.status + " Error!\n" + xhttp.responseText);
+				location.reload()
+			}
+		}
+	}
+	
+	xhttp.open("POST", "wifi/set_param", true);
+	xhttp.send(param1+param2+param3+param4);
+	
+}
 </script>
 <body onload="reload_all_item()">
 <h1 align="center">Welcome to Smart Bin Main Page</h1>
@@ -320,6 +406,61 @@ Enabel MAT </label></td>
 	  <label><input id="CubbyR1C8" type="radio" name="SmartBin" value="CubbyR1C8" />CubbyR1C8</label>
 	</td>
     
+  </tr>
+</table>
+
+<table width="100%" border="1">
+  <tr>
+    <td>Location ID </td>
+    <td><input type="text" name="textfield" id="location_id" /></td>
+  </tr>
+  <tr>
+    <td width="12%">Product Name </td>
+    <td width="88%"><input type="text" name="textfield" id="product_num" />
+      *</td>
+  </tr>
+  <tr>
+    <td>Desc1</td>
+    <td><input type="text" name="textfield" id="desc1" /></td>
+  </tr>
+  <tr>
+    <td>Desc2</td>
+    <td><input type="text" name="textfield" id="desc2" /></td>
+  </tr>
+  
+  
+  
+  
+  <tr>
+    <td>Minimum Quantity</td>
+    <td><input type="text" name="textfield" id="min_qty" /></td>
+  </tr>
+  <tr>
+    <td>Maxima Quantity</td>
+    <td><input type="text" name="textfield" id="max_qty" /></td>
+  </tr>
+  <tr>
+    <td>Reorder Quantity</td>
+    <td><input type="text" name="textfield" id="reorder_qty" /> 
+    * </td>
+  </tr>
+  <tr>
+    <td>Picture</td>
+    <td><input type="text" name="textfield" id="picture" /></td>
+  </tr>
+  <tr>
+    <td>Single Weight</td>
+    <td><input type="text" name="textfield" id="single_weight" /> 
+      * </td>
+  </tr>
+  <tr>
+    <td>Weight Coefficient</td>
+    <td><input type="text" name="textfield" id="weight_per_adc" value="0.93361" /> 
+      * </td>
+  </tr>
+  
+  <tr>
+    <td colspan="2"><button id="cubby_set" type="button" onclick="update_cubby_info()">Update Selected Cubby Information</button></td>
   </tr>
 </table>
 

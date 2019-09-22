@@ -327,13 +327,28 @@ void rs485_cmd_led(uint8 idh, uint8 idl, uint8 led_value)
 
 /*
 */
-void rs485_cmd_lcd(uint8 idh, uint8 idl, uint8 type, uint8 len, char * cbuf, uint8 num)
+void rs485_cmd_lcd(uint8 idh, uint8 idl, uint8 type, uint8 len, char * cbuf, uint8 num, uint8 mode, uint8 bg)
 {
 	int uart_num = ECHO_UART_PORT;
-	uint8 tx_len = len+19, i;
+	uint8 tx_len = 0, i;
 	uint16 tx_sum = 0;
-	uint8_t* tx_buf = (uint8_t*) malloc(tx_len+1);
+	uint8_t* tx_buf = NULL;
 	u8_mat_query_delay = 0;
+
+	if(type == 0xA1)
+	{
+		tx_len = len+18;
+	}
+	else if((type == 0xA2) || (type == 0xA3))
+	{
+		tx_len = len+19;
+	}
+	else if(type == 0xA4)
+	{
+		len = 3;
+		tx_len = len+18;
+	}
+	tx_buf = (uint8_t*) malloc(tx_len+1);
 	memset(tx_buf, 0x00, tx_len+1);
 	
 	tx_buf[0] = PTL_PREFIX;
@@ -350,17 +365,55 @@ void rs485_cmd_lcd(uint8 idh, uint8 idl, uint8 type, uint8 len, char * cbuf, uin
 	tx_buf[11] = type;	//PTL_CMD_LCDA1
 	tx_buf[12] = 0x00;	//cmd type
 	tx_buf[13] = len+2;	//payload length
-	tx_buf[14] = num;
-	for(i=0; i<len; i++)
+
+	if(type == 0xA1)
 	{
-		tx_buf[15+i] = cbuf[i];
+		for(i=0; i<len; i++)
+		{
+			tx_buf[14+i] = cbuf[i];
+		}
+		tx_buf[tx_len-4] = num;
 	}
-//	tx_buf[tx_len-4] = num;
+	else if((type == 0xA2) || (type == 0xA3))
+	{
+		tx_buf[14] = num;
+		for(i=0; i<len; i++)
+		{
+			tx_buf[15+i] = cbuf[i];
+		}
+	}
+	else if(type == 0xA4)
+	{
+		if(mode == 1)
+		{
+			tx_buf[15] = 0;
+			tx_buf[15] = 1<<(num-1);
+			tx_buf[16] = 1<<(num-1);
+		}
+		else
+		{
+			tx_buf[15] = 0;
+			tx_buf[15] = 1<<(num-1);
+			tx_buf[16] = 0;
+		}
+		if(bg == 1)
+		{
+			tx_buf[17] = 0xFF;
+			tx_buf[18] = 0xFF;
+		}
+		else
+		{
+			tx_buf[17] = 0;
+			tx_buf[17] = 0xFF;
+			tx_buf[18] = 0;
+		}
+	}
 	
 	tx_sum = if_data_ckeck(tx_buf, tx_len-2);
 	tx_buf[tx_len-2] = (tx_sum>>8)&0xFF;
 	tx_buf[tx_len-1] = (tx_sum)&0xFF;
-
+	
+//	ESP_LOGI(TAG, "rs485_cmd_lcd tx:");
 //	ESP_LOG_STR(tx_buf, tx_len);
 	uart_write_bytes(uart_num, (char *)tx_buf, tx_len);
 }
@@ -397,6 +450,7 @@ void init_m_bin(void)
 	float	f_wperadc = 0.93361;
 	if(sd_card_det()==0) {
 	FILE *fd = NULL;
+//	FILE *fd2 = NULL;
 	fd = fopen(SYSTEM_CONF,"rt");
 	if(fd == NULL){
 		return;
@@ -417,6 +471,9 @@ void init_m_bin(void)
 	if(hu_profile_getchar("MATL1R", "UUID", (char *)buf, fd) == 0) {
 		m_bin.m_mat[1].u16_mat_id = atoi(buf);
 	}
+	if(hu_profile_getchar("MATL1R", "LCDID", (char *)buf, fd) == 0) {
+		m_bin.m_mat[1].u32_lcd_id = atoi(buf);
+	}
 
 	if(hu_profile_getchar("MATL2L", "UUID", (char *)buf, fd) == 0) {
 		m_bin.m_mat[2].u16_mat_id = atoi(buf);
@@ -427,6 +484,9 @@ void init_m_bin(void)
 
 	if(hu_profile_getchar("MATL2R", "UUID", (char *)buf, fd) == 0) {
 		m_bin.m_mat[3].u16_mat_id = atoi(buf);
+	}
+	if(hu_profile_getchar("MATL2R", "LCDID", (char *)buf, fd) == 0) {
+		m_bin.m_mat[3].u32_lcd_id = atoi(buf);
 	}
 
 	if(hu_profile_getchar("MATL3L", "UUID", (char *)buf, fd) == 0) {
@@ -439,6 +499,9 @@ void init_m_bin(void)
 	if(hu_profile_getchar("MATL3R", "UUID", (char *)buf, fd) == 0) {
 		m_bin.m_mat[5].u16_mat_id = atoi(buf);
 	}
+	if(hu_profile_getchar("MATL3R", "LCDID", (char *)buf, fd) == 0) {
+		m_bin.m_mat[5].u32_lcd_id = atoi(buf);
+	}
 
 	if(hu_profile_getchar("MATL4L", "UUID", (char *)buf, fd) == 0) {
 		m_bin.m_mat[6].u16_mat_id = atoi(buf);
@@ -449,6 +512,9 @@ void init_m_bin(void)
 
 	if(hu_profile_getchar("MATL4R", "UUID", (char *)buf, fd) == 0) {
 		m_bin.m_mat[7].u16_mat_id = atoi(buf);
+	}
+	if(hu_profile_getchar("MATL4R", "LCDID", (char *)buf, fd) == 0) {
+		m_bin.m_mat[7].u32_lcd_id = atoi(buf);
 	}
 
 	if(hu_profile_getchar("MATL5L", "UUID", (char *)buf, fd) == 0) {
@@ -461,18 +527,31 @@ void init_m_bin(void)
 	if(hu_profile_getchar("MATL5R", "UUID", (char *)buf, fd) == 0) {
 		m_bin.m_mat[9].u16_mat_id = atoi(buf);
 	}
+	if(hu_profile_getchar("MATL5R", "LCDID", (char *)buf, fd) == 0) {
+		m_bin.m_mat[9].u32_lcd_id = atoi(buf);
+	}
 
 	for(i = 0; i<MAT_CNT_MAX; i++)
 	{
 		for(j = 0; j < 4; j++)
 		{
-			m_bin.m_mat[i].m_cubby[j].f_wperadc = f_wperadc;
+		//	m_bin.m_mat[i].m_cubby[j].f_wperadc = f_wperadc;
 		//	m_bin.m_mat[i].m_cubby[j].f_single_weight = 12.5;
 			m_bin.m_mat[i].m_cubby[j].u32_adc_raw = 0;
 		//	m_bin.m_mat[i].m_cubby[j].u32_adc_peeling = 0x80000;
 			m_bin.m_mat[i].m_cubby[j].u8_led_status = 0;
 
 			sprintf(cubbyname, "CubbyR%dC%d", (i/2)+1, ((i%2)*4)+j+1);
+			/*
+			fd2 = fopen(cubbyname, "rt");
+			if(fd2 == NULL){
+				m_bin.m_mat[i].m_cubby[j].u32_adc_peeling = 0x80000;
+				m_bin.m_mat[i].m_cubby[j].f_single_weight = 12.5;
+				m_bin.m_mat[i].m_cubby[j].f_wperadc = f_wperadc;
+				continue;
+			}
+			*/
+			
 			if(hu_profile_getchar(cubbyname, "ADC_PEELING", (char *)buf, fd) == 0){
 				m_bin.m_mat[i].m_cubby[j].u32_adc_peeling = atoi(buf);
 			} else {
@@ -484,10 +563,18 @@ void init_m_bin(void)
 			} else {
 				m_bin.m_mat[i].m_cubby[j].f_single_weight = 12.5;
 			}
+
+			if(hu_profile_getchar(cubbyname, "WeightPerADC", (char *)buf, fd) == 0){
+				m_bin.m_mat[i].m_cubby[j].f_wperadc = atof(buf);
+			} else {
+				m_bin.m_mat[i].m_cubby[j].f_wperadc = f_wperadc;
+			}
+		//	fclose(fd2);
 		}
 	}
-
 	fclose(fd);
+
+	
 	}
 	
 	/*
@@ -509,20 +596,58 @@ void init_m_bin(void)
  */
 void api_set_mat_id(uint8 index, uint32 mat_id)
 {
+	char value[16], cubbyname[16];
 	if(index < MAT_CNT_MAX)
 	{
 		m_bin.m_mat[index].u16_mat_id = mat_id;
+		if((index%2) == 0)
+		{
+			sprintf(cubbyname, "MATL%dL", (index/2)+1);
+		}
+		else
+		{
+			sprintf(cubbyname, "MATL%dR", (index/2)+1);
+		}
+		sprintf(value, "%d", m_bin.m_mat[index].u16_mat_id);
+
+		hu_profile_setstr(cubbyname, "UUID", value, SYSTEM_CONF);
 	}
 }
 
+/*
+ * index: 0~9
+ * MATL5L, MATL5R
+ * ...
+ * MATL1L, MATL1R
+ */
 void api_set_mat_lcd_id(uint8 index, uint32 id)
 {
+	char value[16], cubbyname[16];
 	if(index < MAT_CNT_MAX)
 	{
 		m_bin.m_mat[index].u32_lcd_id = id;
+		if((index%2) == 0)
+		{
+			sprintf(cubbyname, "MATL%dL", (index/2)+1);
+		}
+		else
+		{
+			sprintf(cubbyname, "MATL%dR", (index/2)+1);
+		}
+		sprintf(value, "%d", m_bin.m_mat[index].u32_lcd_id);
+
+		hu_profile_setstr(cubbyname, "LCDID", value, SYSTEM_CONF);
 	}
 }
 
+/*
+ * i: 0~9
+ * j: 0~3
+ *
+ * CubbyR5C1 ~ CubbyR5C8
+ * ...
+ * CubbyR1C1 ~ CubbyR1C8
+ */
 void api_peeling(void)
 {
 	uint8 i = 0, j = 0;
@@ -538,8 +663,57 @@ void api_peeling(void)
 			sprintf(value, "%d", m_bin.m_mat[i].m_cubby[j].u32_adc_raw);
 
 			hu_profile_setstr(cubbyname, "ADC_PEELING", value, SYSTEM_CONF);
+		//	hu_profile_setstr(cubbyname, "ADC_PEELING", value, cubbyname);
 		}
 	}
+}
+
+void api_update_cubby_info(uint32 mat_id, uint8 cubby_index, ST_CUBBY cubby)
+{
+	char value[100], cubbyname[16];
+	
+	ESP_LOGI(TAG, "mat_id=%d, cubby_index=%d", mat_id, cubby_index);
+	ESP_LOGI(TAG, "str_location_id=%s", cubby.str_location_id);
+	ESP_LOGI(TAG, "str_product_num=%s", cubby.str_product_num);
+	ESP_LOGI(TAG, "str_desc1=%s", cubby.str_desc1);
+	ESP_LOGI(TAG, "str_desc2=%s", cubby.str_desc2);
+	ESP_LOGI(TAG, "str_picture=%s", cubby.str_picture);
+	ESP_LOGI(TAG, "u32_min_qty=%d", cubby.u32_min_qty);
+	ESP_LOGI(TAG, "u32_max_qty=%d", cubby.u32_max_qty);
+	ESP_LOGI(TAG, "u32_reorder_qty=%d", cubby.u32_reorder_qty);
+	ESP_LOGI(TAG, "f_wperadc=%lf", cubby.f_wperadc);
+	ESP_LOGI(TAG, "f_single_weight=%lf", cubby.f_single_weight);
+
+	sprintf(cubbyname, "CubbyR%dC%d", (mat_id/2)+1, ((mat_id%2)*4)+cubby_index+1);
+	
+	sprintf(value, "%s", cubby.str_location_id);
+	hu_profile_setstr(cubbyname, "Location_id", value, SYSTEM_CONF);
+	sprintf(value, "%s", cubby.str_product_num);
+	hu_profile_setstr(cubbyname, "ProductNum", value, SYSTEM_CONF);
+	sprintf(value, "%s", cubby.str_desc1);
+	hu_profile_setstr(cubbyname, "Desc1", value, SYSTEM_CONF);
+	sprintf(value, "%s", cubby.str_desc2);
+	hu_profile_setstr(cubbyname, "Desc2", value, SYSTEM_CONF);
+	sprintf(value, "%d", cubby.u32_min_qty);
+	hu_profile_setstr(cubbyname, "Min_Qty", value, SYSTEM_CONF);
+	sprintf(value, "%d", cubby.u32_max_qty);
+	hu_profile_setstr(cubbyname, "Max_Qty", value, SYSTEM_CONF);
+	sprintf(value, "%d", cubby.u32_reorder_qty);
+	hu_profile_setstr(cubbyname, "Reorder_Qty", value, SYSTEM_CONF);
+	sprintf(value, "%s", cubby.str_picture);
+	hu_profile_setstr(cubbyname, "Picture", value, SYSTEM_CONF);
+	sprintf(value, "%lf", cubby.f_single_weight);
+	hu_profile_setstr(cubbyname, "WeightSingle", value, SYSTEM_CONF);
+	sprintf(value, "%lf", cubby.f_wperadc);
+	hu_profile_setstr(cubbyname, "WeightPerADC", value, SYSTEM_CONF);
+
+	
+	m_bin.m_mat[mat_id].m_cubby[cubby_index].u32_min_qty = cubby.u32_min_qty;
+	m_bin.m_mat[mat_id].m_cubby[cubby_index].u32_max_qty = cubby.u32_max_qty;
+	m_bin.m_mat[mat_id].m_cubby[cubby_index].u32_reorder_qty = cubby.u32_reorder_qty;
+
+	m_bin.m_mat[mat_id].m_cubby[cubby_index].f_wperadc = cubby.f_wperadc;
+	m_bin.m_mat[mat_id].m_cubby[cubby_index].f_single_weight = cubby.f_single_weight;
 }
 
 uint32 api_get_id(void)
@@ -624,17 +798,17 @@ void m_bin_update_lcd(uint8 index, uint8 type)
 		}
 		str_len = lcd_i;
 
-	//	ESP_LOG_STR((uint8 *)lcd_buf, str_len);
+		//	ESP_LOG_STR((uint8 *)lcd_buf, str_len);
+		if(index%2 == 0)
+		{
+			cubby_i = 1;
+		}
+		else
+		{
+			cubby_i = 5;
+		}
+		rs485_cmd_lcd(idh, idl, lcd_type, str_len, lcd_buf, cubby_i, 0, 0);
 	}
-	if(index%2 == 0)
-	{
-		cubby_i = 1;
-	}
-	else
-	{
-		cubby_i = 5;
-	}
-	rs485_cmd_lcd(idh, idl, lcd_type, str_len, lcd_buf, cubby_i);
 }
 
 /*
@@ -663,7 +837,6 @@ void rs485_parse_rx(uint8 * psrc, uint8 len)
 				if(psrc[2] == 0x01)
 				{
 					u16_mat_id = ((uint16)psrc[3]<<8)|psrc[4];
-					
 				//	ESP_LOGI(TAG, "u16_mat_id = 0x%.4X", u16_mat_id);
 					u8_mat_index = find_mat_index(u16_mat_id);
 					if(u8_mat_index < MAT_CNT_MAX)
@@ -689,6 +862,15 @@ void rs485_parse_rx(uint8 * psrc, uint8 len)
 						//	ESP_LOGI(TAG,"[%d]cubby3:%d", u8_mat_index, m_bin.m_mat[u8_mat_index].m_cubby[2].u32_adc_raw);
 						//	ESP_LOGI(TAG,"[%d]cubby4:%d", u8_mat_index, m_bin.m_mat[u8_mat_index].m_cubby[3].u32_adc_raw);
 						//	ESP_LOGI(TAG, "store adc raw data ok!\r\n");
+						}
+					}
+
+					if(u16_mat_id == 13)
+					{
+						if(psrc[11] == PTL_CMD_LCDA4)
+						{
+						//	ESP_LOGI(TAG, "rx:");
+						//	ESP_LOG_STR(psrc, len);
 						}
 					}
 				}
@@ -791,7 +973,7 @@ void echo_task(void *arg)
 			u8_mat_query_delay++;
 			if(u8_mat_query_delay > QUERY_DELAY_MAX)
 			{
-				u8_mat_query_delay = QUERY_DELAY_MAX;
+				u8_mat_query_delay = (QUERY_DELAY_MAX+1);
 				
 			}
         }

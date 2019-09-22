@@ -34,7 +34,6 @@ typedef union{
 #include "config_function.h"
 
 #include "rs485_example.h"
-#include "file_server.h"
 #include "softap_example_main.h"
 
 #if (SD_CARD_EN == 1)
