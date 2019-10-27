@@ -304,6 +304,82 @@ static esp_err_t mat_get_weight_handler(httpd_req_t *req)
 }
 
 /* Simple handler for getting weight sensor data */
+static esp_err_t box_get_weight_handler(httpd_req_t *req)
+{
+	int total_len = req->content_len;
+	int cur_len = 0;
+	uint8 param_len=0;
+	uint32 u32_box_id=0;
+	uint32 cup_index = 0;
+	char *params = NULL;
+//	char buf2[100];
+	uint32 weight,quantity;
+//	memset(buf2, 0, 100);
+	
+	char *buf = ((rest_server_context_t *)(req->user_ctx))->scratch;
+//	ESP_LOGI(REST_TAG, "uri[%s],\r\n", req->uri);
+	params = (char *)strchr(req->uri, '?');
+	if (params != NULL) {
+		/* URI contains parameters. NULL-terminate the base URI */
+		*params = '\0';
+		params++;
+    }
+
+	int received = 0;
+	if (total_len >= SCRATCH_BUFSIZE) {
+		/* Respond with 500 Internal Server Error */
+		httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "content too long");
+		return ESP_FAIL;
+	}
+	while (cur_len < total_len) {
+		received = httpd_req_recv(req, buf + cur_len, total_len);
+		if (received <= 0) {
+			/* Respond with 500 Internal Server Error */
+			httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to post control value");
+			return ESP_FAIL;
+		}
+		cur_len += received;
+	}
+	buf[total_len] = '\0';
+
+//	ESP_LOGI(REST_TAG, "buf[%s],cur_len=%d\r\n", buf, cur_len);
+
+	param_len = parse_uri_parameters(params);
+
+	for(int i=0; i<param_len; i++)
+	{
+	//	ESP_LOGI(REST_TAG, "http_cgi_params[%d]=%s,http_cgi_param_vals[%d]=%s\r\n",i,http_cgi_params[i],i,http_cgi_param_vals[i]);
+
+		if(strncmp(http_cgi_params[i],"box_id", 6) == 0)
+		{
+			u32_box_id = atoi(http_cgi_param_vals[i]);
+		}
+		else if(strncmp(http_cgi_params[i],"cup_index", 9) == 0)
+		{
+			cup_index = atoi(http_cgi_param_vals[i]);
+		}
+	}
+//	api_get_box_pn(u32_box_id, cup_index, buf2);
+//	wperadc = api_get_box_wperadc(u32_box_id, cup_index);
+
+	weight = api_get_box_weight(u32_box_id, cup_index);
+	quantity = api_get_box_qty(u32_box_id, cup_index);
+//	ESP_LOGI(REST_TAG, "cup_index=%d, weight=%d, quantity=%d", cup_index, weight, quantity);
+
+	httpd_resp_set_type(req, "application/json");
+	cJSON *root = cJSON_CreateObject();
+//	cJSON_AddStringToObject(root, "PartNumber", buf2);
+//	cJSON_AddNumberToObject(root, "wperadc", wperadc);
+	cJSON_AddNumberToObject(root, "Weight", weight);
+	cJSON_AddNumberToObject(root, "Quantity",quantity);
+	const char *sys_info = cJSON_Print(root);
+	httpd_resp_sendstr(req, sys_info);
+	free((void *)sys_info);
+	cJSON_Delete(root);
+	return ESP_OK;
+}
+
+/* Simple handler for getting weight sensor data */
 static esp_err_t mat_get_id_handler(httpd_req_t *req)
 {
 	int total_len = req->content_len;
@@ -459,6 +535,69 @@ static esp_err_t mat_set_led_handler(httpd_req_t *req)
 //	ESP_LOGI(REST_TAG, "mat_id=%u,idh=%d, idl=%d, led_value=%d\r\n", u32_mat_id, idh, idl, led_value);
 
 	rs485_cmd_led(idh, idl, led_value);
+
+	/* Redirect onto root to see the updated file list */
+	httpd_resp_set_status(req, HTTPD_200);
+//	httpd_resp_set_hdr(req, "Location", "self.reload()");
+//	httpd_resp_sendstr(req, "Set Cubby LED successfully");
+
+    return ESP_OK;
+}
+
+/* Handler to the set mat led onto the server */
+static esp_err_t box_set_led_handler(httpd_req_t *req)
+{
+	int total_len = req->content_len;
+	int cur_len = 0;
+	uint8 param_len=0, idh=0, idl=0;
+	uint32 u32_mat_id=0;
+	uint32 led_value=0;
+	uint32 led_en = 0;
+	char *buf = ((rest_server_context_t *)(req->user_ctx))->scratch;
+
+	int received = 0;
+	if (total_len >= SCRATCH_BUFSIZE) {
+		/* Respond with 500 Internal Server Error */
+		httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "content too long");
+		return ESP_FAIL;
+	}
+	while (cur_len < total_len) {
+		received = httpd_req_recv(req, buf + cur_len, total_len);
+		if (received <= 0) {
+			/* Respond with 500 Internal Server Error */
+			httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to post control value");
+			return ESP_FAIL;
+		}
+		cur_len += received;
+	}
+	buf[total_len] = '\0';
+
+	ESP_LOGI(REST_TAG, "buf[%s],cur_len=%d\r\n", buf, cur_len);
+
+	param_len = parse_uri_parameters(buf);
+
+	for(int i=0; i<param_len; i++)
+	{
+	//	ESP_LOGI(REST_TAG, "http_cgi_params[%d]=%s,http_cgi_param_vals[%d]=%s\r\n",i,http_cgi_params[i],i,http_cgi_param_vals[i]);
+
+		if(strncmp(http_cgi_params[i],"box_id", 6) == 0)
+		{
+			u32_mat_id = atoi(http_cgi_param_vals[i]);
+			idh = (u32_mat_id>>8)&0xFF;
+			idl = u32_mat_id&0xFF;
+		}
+		else if(strncmp(http_cgi_params[i],"led_value", 9) == 0)
+		{
+			led_value = atoi(http_cgi_param_vals[i]);
+		}
+		else if(strncmp(http_cgi_params[i],"led_en", 6) == 0)
+		{
+			led_en = atoi(http_cgi_param_vals[i]);
+		}
+	}
+	ESP_LOGI(REST_TAG, "mat_id=%u,idh=%d, idl=%d, led_en = 0x%X, led_value=0x%X\r\n", u32_mat_id, idh, idl, led_en, led_value);
+
+	rs485_cmd_led_box(idh, idl, led_en, led_value);
 
 	/* Redirect onto root to see the updated file list */
 	httpd_resp_set_status(req, HTTPD_200);
@@ -672,6 +811,14 @@ static esp_err_t wifi_set_param_handler(httpd_req_t *req)
 				api_peeling();
 			}
 		}
+		else if(strncmp(http_cgi_params[i],"box_taring_all", 14) == 0)
+		{
+			if(strncmp(http_cgi_param_vals[i],"true", 4) == 0)
+			{
+				api_box_taring();
+				cmd_index = 2;
+			}
+		}
 		else if(strncmp(http_cgi_params[i],"update_cubby_info", 17) == 0)
 		{
 			if(strncmp(http_cgi_param_vals[i],"true", 4) == 0)
@@ -752,11 +899,12 @@ static esp_err_t wifi_set_param_handler(httpd_req_t *req)
 	/* Redirect onto root to see the updated file list */
 	httpd_resp_set_status(req, HTTPD_200);
 //	httpd_resp_set_hdr(req, "Location", "self.reload()");
-	if(cmd_index == 0)
-	{
+	if(cmd_index == 0) {
 		httpd_resp_sendstr(req, "Assign system mat Id array successfully");
 	} else if(cmd_index == 1) {
 		httpd_resp_sendstr(req, "Update Cubby information successfully");
+	} else if(cmd_index == 2) {
+		httpd_resp_sendstr(req, "Paring Box information successfully");
 	}
 
     return ESP_OK;
@@ -889,6 +1037,14 @@ esp_err_t start_rest_server(const char *base_path)
         .user_ctx	= rest_context
     };
     httpd_register_uri_handler(server, &mat_get_weight);
+
+	httpd_uri_t box_get_weight = {
+        .uri		= "/box/get_weight",
+        .method		= HTTP_GET,
+        .handler	= box_get_weight_handler,
+        .user_ctx	= rest_context
+    };
+    httpd_register_uri_handler(server, &box_get_weight);
 	
     /* URI handler for getting web server files */
     httpd_uri_t common_get_uri = {
@@ -925,6 +1081,15 @@ esp_err_t start_rest_server(const char *base_path)
         .user_ctx  = rest_context
     };
     httpd_register_uri_handler(server, &mat_set_led);
+
+	/* URI handler for set box led */
+    httpd_uri_t box_set_led = {
+        .uri       = "/box/set_led",
+        .method    = HTTP_POST,
+        .handler   = box_set_led_handler,
+        .user_ctx  = rest_context
+    };
+    httpd_register_uri_handler(server, &box_set_led);
 
 	/* URI handler for set mat lcd */
     httpd_uri_t mat_set_lcd = {

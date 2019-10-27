@@ -1,0 +1,466 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Box Control</title>
+
+</head>
+<script>
+function led_set()
+{
+	var id_set = document.getElementById("box_id_set_input").value;
+	var led_en = 0;
+	var led_v = 0;
+	//*
+	var led_value_1 = document.getElementById("led1").checked;
+	var led_value_2 = document.getElementById("led2").checked;
+	var led_value_3 = document.getElementById("led3").checked;
+	var led_value_4 = document.getElementById("led4").checked;
+	var led_value_5 = document.getElementById("led5").checked;
+	var led_value_6 = document.getElementById("led6").checked;
+	var led_value_7 = document.getElementById("led7").checked;
+	var led_value_8 = document.getElementById("led8").checked;
+	var led_value_9 = document.getElementById("led9").checked;
+	var led_value_10 = document.getElementById("led10").checked;
+	var led_value_11 = document.getElementById("led11").checked;
+	var led_value_12 = document.getElementById("led12").checked;
+	var led_value_13 = document.getElementById("led13").checked;
+	var led_value_14 = document.getElementById("led14").checked;
+	var led_value_15 = document.getElementById("led15").checked;
+	var led_value_16 = document.getElementById("led16").checked;
+	var led_value_17 = document.getElementById("led17").checked;
+	var led_value_18 = document.getElementById("led18").checked;
+	var led_value_19 = document.getElementById("led19").checked;
+	var led_value_20 = document.getElementById("led20").checked;
+	var led_value_21 = document.getElementById("led21").checked;
+	var led_value_22 = document.getElementById("led22").checked;
+	var led_value_23 = document.getElementById("led23").checked;
+	var led_value_24 = document.getElementById("led24").checked;
+
+	if(led_value_1 == true)	{	led_en |= 0x000001; led_v |= 0x000001;	}	else	{	led_en |= 0x000001;	led_v &= 0xFFFFFE;	}
+	if(led_value_2 == true)	{	led_en |= 0x000002; led_v |= 0x000002;	}	else	{	led_en |= 0x000002;	led_v &= 0xFFFFFD;	}
+	if(led_value_3 == true)	{	led_en |= 0x000004; led_v |= 0x000004;	}	else	{	led_en |= 0x000004;	led_v &= 0xFFFFFB;	}
+	if(led_value_4 == true)	{	led_en |= 0x000008; led_v |= 0x000008;	}	else	{	led_en |= 0x000008;	led_v &= 0xFFFFF7;	}
+	
+	if(led_value_5 == true)	{	led_en |= 0x000010; led_v |= 0x000010;	}	else	{	led_en |= 0x000010;	led_v &= 0xFFFFEF;	}
+	if(led_value_6 == true)	{	led_en |= 0x000020; led_v |= 0x000020;	}	else	{	led_en |= 0x000020;	led_v &= 0xFFFFDF;	}
+	if(led_value_7 == true)	{	led_en |= 0x000040; led_v |= 0x000040;	}	else	{	led_en |= 0x000040;	led_v &= 0xFFFFBF;	}
+	if(led_value_8 == true)	{	led_en |= 0x000080; led_v |= 0x000080;	}	else	{	led_en |= 0x000080;	led_v &= 0xFFFF7F;	}
+	
+	if(led_value_9 == true)		{	led_en |= 0x000100; led_v |= 0x000100;	}	else	{	led_en |= 0x000100;	led_v &= 0xFFFEFF;	}
+	if(led_value_10 == true)	{	led_en |= 0x000200; led_v |= 0x000200;	}	else	{	led_en |= 0x000200;	led_v &= 0xFFFDFF;	}
+	if(led_value_11 == true)	{	led_en |= 0x000400; led_v |= 0x000400;	}	else	{	led_en |= 0x000400;	led_v &= 0xFFFBFF;	}
+	if(led_value_12 == true)	{	led_en |= 0x000800; led_v |= 0x000800;	}	else	{	led_en |= 0x000800;	led_v &= 0xFFF7FF;	}
+	
+	if(led_value_13 == true)	{	led_en |= 0x001000; led_v |= 0x001000;	}	else	{	led_en |= 0x001000;	led_v &= 0xFFEFFF;	}
+	if(led_value_14 == true)	{	led_en |= 0x002000; led_v |= 0x002000;	}	else	{	led_en |= 0x002000;	led_v &= 0xFFDFFF;	}
+	if(led_value_15 == true)	{	led_en |= 0x004000; led_v |= 0x004000;	}	else	{	led_en |= 0x004000;	led_v &= 0xFFBFFF;	}
+	if(led_value_16 == true)	{	led_en |= 0x008000; led_v |= 0x008000;	}	else	{	led_en |= 0x008000;	led_v &= 0xFF7FFF;	}
+	
+	if(led_value_17 == true)	{	led_en |= 0x010000; led_v |= 0x010000;	}	else	{	led_en |= 0x010000;	led_v &= 0xFEFFFF;	}
+	if(led_value_18 == true)	{	led_en |= 0x020000; led_v |= 0x020000;	}	else	{	led_en |= 0x020000;	led_v &= 0xFDFFFF;	}
+	if(led_value_19 == true)	{	led_en |= 0x040000; led_v |= 0x040000;	}	else	{	led_en |= 0x040000;	led_v &= 0xFBFFFF;	}
+	if(led_value_20 == true)	{	led_en |= 0x080000; led_v |= 0x080000;	}	else	{	led_en |= 0x080000;	led_v &= 0xF7FFFF;	}
+	
+	if(led_value_21 == true)	{	led_en |= 0x100000; led_v |= 0x100000;	}	else	{	led_en |= 0x100000;	led_v &= 0xEFFFFF;	}
+	if(led_value_22 == true)	{	led_en |= 0x200000; led_v |= 0x200000;	}	else	{	led_en |= 0x200000;	led_v &= 0xDFFFFF;	}
+	if(led_value_23 == true)	{	led_en |= 0x400000; led_v |= 0x400000;	}	else	{	led_en |= 0x400000;	led_v &= 0xBFFFFF;	}
+	if(led_value_24 == true)	{	led_en |= 0x800000; led_v |= 0x800000;	}	else	{	led_en |= 0x800000;	led_v &= 0x7FFFFF;	}
+//	alert( 'led_en='+led_en +',led_v='+ led_v);
+	//*/
+	
+	if (id_set.length == 0)
+	{
+		alert("Please input Box ID first!");
+	}
+	else
+	{
+		
+		var param = "box_id="+id_set+"&led_en="+led_en+"&led_value="+led_v;
+		var xhttp = new XMLHttpRequest();
+		xhttp.onreadystatechange = function() {
+			if (xhttp.readyState == 4) {
+                if (xhttp.status == 200) {
+                    document.open();
+                    document.write(xhttp.responseText);
+                    document.close();
+                } else if (xhttp.status == 0) {
+                    alert("Server closed the connection abruptly!");
+                    location.reload()
+                } else {
+                    alert(xhttp.status + " Error!\n" + xhttp.responseText);
+                    location.reload()
+                }
+            }
+		}
+		
+		xhttp.open("POST", "box/set_led?random="+Math.random(), true);
+        xhttp.send(param);
+	}
+}
+
+function get_cup_weight()
+{
+	var box_id = document.getElementById("box_id_set_input").value;
+	var cup_index = document.getElementById("hidden_id").value;
+	if (box_id.length > 0)
+	{
+		var xmlHttp;
+		try{
+			// Firefox, Opera 8.0+, Safari
+			xmlHttp=new XMLHttpRequest();
+		}
+		catch (e){
+			// Internet Explorer
+			var a = ['MSXML2.XMLHTTP.5.0','MSXML2.XMLHTTP.4.0','MSXML2.XMLHTTP.3.0','MSXML2.XMLHTTP','MICROSOFT.XMLHTTP.1.0','MICROSOFT.XMLHTTP.1','MICROSOFT.XMLHTTP'];
+			for (var i=0;i<a.length;i++){
+				try{
+					xmlhttp = new ActiveXObject(a[i]);
+					break;
+				}
+				catch (e){
+				//	alert("您的浏览器不支持AJAX！");
+					return false;
+				}
+			}
+		}
+		
+		xmlHttp.onreadystatechange=function(){
+			if(xmlHttp.readyState==4){
+				if(xmlHttp.responseText != "")
+				{
+					document.getElementById("div_cup_"+cup_index).innerHTML = xmlHttp.responseText;
+				}
+			}
+		}
+	//	alert("box/get_weight?cup_id="+cup_index);
+		xmlHttp.open("get", "box/get_weight?box_id="+box_id+"&cup_index="+cup_index+"&ramdom="+Math.random(), true);
+	//	xmlHttp.open("get", "mat/get_weight?mat_id="+cup_index+"&ramdom="+Math.random(), true);
+		xmlHttp.send(null);
+		
+		cup_index++;
+		if(cup_index > 24) cup_index=1;
+		document.getElementById("hidden_id").value = cup_index;
+	}
+	
+	setTimeout('get_cup_weight()', 1000);
+}
+
+function box_taring()
+{
+	var param = "box_taring_all=true";
+	var xhttp = new XMLHttpRequest();
+	xhttp.onreadystatechange = function() {
+		if (xhttp.readyState == 4) {
+			if (xhttp.status == 200) {
+				document.open();
+				document.write(xhttp.responseText);
+				document.close();
+			} else if (xhttp.status == 0) {
+				alert("Server closed the connection abruptly!");
+				location.reload()
+			} else {
+				alert(xhttp.status + " Error!\n" + xhttp.responseText);
+				location.reload()
+			}
+		}
+	}
+	
+	xhttp.open("POST", "wifi/set_param", true);
+	xhttp.send(param);
+
+}
+</script>
+<body onload="get_cup_weight();">
+<h1 align="center">Welcome to Box Main Page</h1>
+<table width="100%" border="1">
+  <tr>
+    <td><p>
+  <label>Box ID:
+  <input type="text" id="box_id_set_input" size="4" maxlength="4" />
+  </label>
+  
+</p></td>
+    <td><p><button id="box_taring" type="button" onclick="box_taring()">Taring</button></p></td>
+    <td><p><button type="button" onclick="led_set()">LED Command</button></p></td>
+  </tr>
+</table>
+
+
+
+<table width="100%" border="1">
+  <tr>
+    <td><p>1</p>
+    <p>
+      <label>
+      <input id="led1" type="checkbox" name="checkbox" value="1" onclick="led_set()" />
+      Led      </label>
+    </p>
+	<p>
+	<div id="div_cup_1" ></div>
+	</p>
+    </td>
+    <td><p>2</p>
+    <p>
+      <label>
+      <input id="led2" type="checkbox" name="checkbox" value="2" onclick="led_set()"/>
+      Led
+      </label>
+    </p>
+	<p>
+	<div id="div_cup_2" ></div>
+	</p>
+	</td>
+	<td><p>3</p>
+    <p>
+      <label>
+      <input id="led3" type="checkbox" name="checkbox" value="3" onclick="led_set()"/>
+      Led
+      </label>
+    </p>
+	<p>
+	<div id="div_cup_3" ></div>
+	</p>
+	</td>
+	<td><p>4</p>
+    <p>
+      <label>
+      <input id="led4" type="checkbox" name="checkbox" value="4" onclick="led_set()"/>
+      Led
+      </label>
+    </p>
+	<p>
+	<div id="div_cup_4" ></div>
+	</p>
+	</td>
+	<td><p>5</p>
+      <p>
+      <label>
+      <input id="led5" type="checkbox" name="checkbox" value="5" onclick="led_set()"/>
+      Led
+      </label>
+    </p>
+	<p>
+	<div id="div_cup_5" ></div>
+	</p>
+	</td>
+	<td><p>6</p>
+      <p>
+      <label>
+      <input id="led6" type="checkbox" name="checkbox" value="6" onclick="led_set()"/>
+      Led
+      </label>
+    </p>
+	<p>
+	<div id="div_cup_6" ></div>
+	</p>
+	</td>
+  </tr>
+  <tr>
+    <td><p>7</p>
+      <p>
+      <label>
+      <input id="led7" type="checkbox" name="checkbox" value="7" onclick="led_set()" />
+      Led      </label>
+    </p>
+	<p>
+	<div id="div_cup_7" ></div>
+	</p>
+    </td>
+    <td><p>8</p>
+      <p>
+      <label>
+      <input id="led8" type="checkbox" name="checkbox" value="8" onclick="led_set()"/>
+      Led
+      </label>
+    </p>
+	<p>
+	<div id="div_cup_8" ></div>
+	</p>
+	</td>
+	<td><p>9</p>
+      <p>
+      <label>
+      <input id="led9" type="checkbox" name="checkbox" value="9" onclick="led_set()"/>
+      Led
+      </label>
+    </p>
+	<p>
+	<div id="div_cup_9" ></div>
+	</p>
+	</td>
+	<td><p>10</p>
+      <p>
+      <label>
+      <input id="led10" type="checkbox" name="checkbox" value="10" onclick="led_set()"/>
+      Led
+      </label>
+    </p>
+	<p>
+	<div id="div_cup_10" ></div>
+	</p>
+	</td>
+	<td><p>11</p>
+      <p>
+      <label>
+      <input id="led11" type="checkbox" name="checkbox" value="11" onclick="led_set()"/>
+      Led
+      </label>
+    </p>
+	<p>
+	<div id="div_cup_11" ></div>
+	</p>
+	</td>
+	<td><p>12</p>
+      <p>
+      <label>
+      <input id="led12" type="checkbox" name="checkbox" value="12" onclick="led_set()"/>
+      Led
+      </label>
+    </p>
+	<p>
+	<div id="div_cup_12" ></div>
+	</p>
+	</td>
+  </tr>
+  <tr>
+    <td><p>13</p>
+      <p>
+      <label>
+      <input id="led13" type="checkbox" name="checkbox" value="13" onclick="led_set()" />
+      Led      </label>
+    </p>
+	<p>
+	<div id="div_cup_13" ></div>
+	</p>
+    </td>
+    <td><p>14</p>
+      <p>
+      <label>
+      <input id="led14" type="checkbox" name="checkbox" value="14" onclick="led_set()"/>
+      Led
+      </label>
+    </p>
+	<p>
+	<div id="div_cup_14" ></div>
+	</p>
+	</td>
+	<td><p>15</p>
+      <p>
+      <label>
+      <input id="led15" type="checkbox" name="checkbox" value="15" onclick="led_set()"/>
+      Led
+      </label>
+    </p>
+	<p>
+	<div id="div_cup_15" ></div>
+	</p>
+	</td>
+	<td><p>16</p>
+      <p>
+      <label>
+      <input id="led16" type="checkbox" name="checkbox" value="16" onclick="led_set()"/>
+      Led
+      </label>
+    </p>
+	<p>
+	<div id="div_cup_16" ></div>
+	</p>
+	</td>
+	<td><p>17</p>
+      <p>
+      <label>
+      <input id="led17" type="checkbox" name="checkbox" value="17" onclick="led_set()"/>
+      Led
+      </label>
+    </p>
+	<p>
+	<div id="div_cup_17" ></div>
+	</p>
+	</td>
+	<td><p>18</p>
+      <p>
+      <label>
+      <input id="led18" type="checkbox" name="checkbox" value="18" onclick="led_set()"/>
+      Led
+      </label>
+    </p>
+	<p>
+	<div id="div_cup_18" ></div>
+	</p>
+	</td>
+  </tr>
+  <tr>
+    <td><p>19</p>
+      <p>
+      <label>
+      <input id="led19" type="checkbox" name="checkbox" value="19" onclick="led_set()" />
+      Led      </label>
+    </p>
+	<p>
+	<div id="div_cup_19" ></div>
+	</p>
+    </td>
+    <td><p>20</p>
+      <p>
+      <label>
+      <input id="led20" type="checkbox" name="checkbox" value="20" onclick="led_set()"/>
+      Led
+      </label>
+    </p>
+	<p>
+	<div id="div_cup_20" ></div>
+	</p>
+	</td>
+	<td><p>21</p>
+      <p>
+      <label>
+      <input id="led21" type="checkbox" name="checkbox" value="21" onclick="led_set()"/>
+      Led
+      </label>
+    </p>
+	<p>
+	<div id="div_cup_21" ></div>
+	</p>
+	</td>
+	<td><p>22</p>
+      <p>
+      <label>
+      <input id="led22" type="checkbox" name="checkbox" value="22" onclick="led_set()"/>
+      Led
+      </label>
+    </p>
+	<p>
+	<div id="div_cup_22" ></div>
+	</p>
+	</td>
+	<td><p>23</p>
+      <p>
+      <label>
+      <input id="led23" type="checkbox" name="checkbox" value="23" onclick="led_set()"/>
+      Led
+      </label>
+    </p>
+	<p>
+	<div id="div_cup_23" ></div>
+	</p>
+	</td>
+	<td><p>24</p>
+    <p>
+      <label>
+      <input id="led24" type="checkbox" name="checkbox" value="24" onclick="led_set()"/>
+      Led
+      </label>
+    </p>
+	<p>
+	<div id="div_cup_24" ></div>
+	</p>
+	</td>
+  </tr>
+</table>
+
+<p>&nbsp;</p>
+
+<div style="visibility:hidden"><input id="hidden_id" name="hidden_id" value="1"/></div>
+</body>
+</html>

@@ -8,6 +8,7 @@
 #define DEF_CONF_FILE	"/www/profile_def.conf"
 #define TEMP_CONF_FILE	"/www/profile_temp.conf"
 #define SYSTEM_CONF		"/www/profile.conf"
+#define BIN_BOX_CONF	"/www/profile_box.conf"
 
 #define MAX_LEN			512
 #define MAX_KEY_LEN		64

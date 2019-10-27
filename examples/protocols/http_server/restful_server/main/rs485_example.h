@@ -36,7 +36,8 @@
 #define	PTL_CMD_LCDA4	0xA4
 
 #define	MAT_CNT_MAX		10
-#define	QUERY_DELAY_MAX	1
+#define	BOX_CNT_MAX		4
+#define	QUERY_DELAY_MAX	5
 
 typedef struct
 {
@@ -66,6 +67,12 @@ typedef struct
 
 typedef struct
 {
+	uint32	u32_box_id;
+	ST_CUBBY	m_cup[24];
+}ST_BOX;
+
+typedef struct
+{
 	uint8	str_uuid[100];
 	uint8	str_customer_num[50];
 	uint8	str_location_uuid[60];
@@ -79,8 +86,10 @@ typedef struct
 	uint8	str_wifi_password[100];
 	uint8	str_wifi_ssid[50];
 	ST_MAT	m_mat[MAT_CNT_MAX];
+	ST_BOX	m_box[BOX_CNT_MAX];
 	uint32	u32_single_id_tx;
 	uint32	u32_single_id_rx;
+	uint8	u8_bin_type;			//0:mat; 1:box
 }ST_CUBBY_BIN;
 
 extern ST_CUBBY_BIN	m_bin;
@@ -92,6 +101,7 @@ uint8 find_mat_index(uint16 mat_id);
 
 void rs485_tx_package(uint8 type);
 void rs485_cmd_led(uint8 idh, uint8 idl, uint8 led_value);
+void rs485_cmd_led_box(uint8 idh, uint8 idl, uint32 led_en, uint32 led_value);
 void rs485_cmd_set_id(uint8 mcu_type, uint8 idh, uint8 idl);
 void rs485_cmd_get_id(uint8 mcu_type);
 void rs485_cmd_lcd(uint8 idh, uint8 idl, uint8 type, uint8 len, char * cbuf, uint8 num, uint8 mode, uint8 bg);
@@ -101,7 +111,13 @@ uint32 api_get_id();
 void api_set_mat_id(uint8 index, uint32 mat_id);
 void api_set_mat_lcd_id(uint8 index, uint32 id);
 void api_peeling(void);
+void api_box_taring(void);
 void api_update_cubby_info(uint32 mat_id, uint8 cubby_index, ST_CUBBY cubby);
+uint32 api_get_box_pn(uint32 box_id, uint32 cup_index, char * pdest);
+uint32 api_get_box_wperadc(uint32 box_id, uint32 cup_index);
+
+uint32 api_get_box_weight(uint32 box_id, uint32 cup_index);
+uint32 api_get_box_qty(uint32 box_id, uint32 cup_index);
 
 
 #endif
