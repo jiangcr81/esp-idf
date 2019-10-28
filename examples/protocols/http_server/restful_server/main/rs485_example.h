@@ -117,6 +117,8 @@ uint32 api_get_box_pn(uint32 box_id, uint32 cup_index, char * pdest);
 uint32 api_get_box_wperadc(uint32 box_id, uint32 cup_index);
 
 uint32 api_get_box_weight(uint32 box_id, uint32 cup_index);
+uint32 api_get_box_adc_raw(uint32 box_id, uint32 cup_index);
+uint32 api_get_box_adc_taring(uint32 box_id, uint32 cup_index);
 uint32 api_get_box_qty(uint32 box_id, uint32 cup_index);
 
 

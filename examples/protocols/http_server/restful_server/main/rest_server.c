@@ -313,7 +313,7 @@ static esp_err_t box_get_weight_handler(httpd_req_t *req)
 	uint32 cup_index = 0;
 	char *params = NULL;
 //	char buf2[100];
-	uint32 weight,quantity;
+	uint32 adc_raw,adc_taring,weight,quantity;
 //	memset(buf2, 0, 100);
 	
 	char *buf = ((rest_server_context_t *)(req->user_ctx))->scratch;
@@ -361,6 +361,8 @@ static esp_err_t box_get_weight_handler(httpd_req_t *req)
 	}
 //	api_get_box_pn(u32_box_id, cup_index, buf2);
 //	wperadc = api_get_box_wperadc(u32_box_id, cup_index);
+	adc_raw = api_get_box_adc_raw(u32_box_id, cup_index);
+	adc_taring = api_get_box_adc_taring(u32_box_id, cup_index);
 
 	weight = api_get_box_weight(u32_box_id, cup_index);
 	quantity = api_get_box_qty(u32_box_id, cup_index);
@@ -369,7 +371,9 @@ static esp_err_t box_get_weight_handler(httpd_req_t *req)
 	httpd_resp_set_type(req, "application/json");
 	cJSON *root = cJSON_CreateObject();
 //	cJSON_AddStringToObject(root, "PartNumber", buf2);
-//	cJSON_AddNumberToObject(root, "wperadc", wperadc);
+//	cJSON_AddNumberToObject(root, "adc_raw", adc_raw);
+//	cJSON_AddNumberToObject(root, "adc_taring", adc_taring);
+//	cJSON_AddNumberToObject(root, "adc_delta", abs(adc_raw-adc_taring));
 	cJSON_AddNumberToObject(root, "Weight", weight);
 	cJSON_AddNumberToObject(root, "Quantity",quantity);
 	const char *sys_info = cJSON_Print(root);

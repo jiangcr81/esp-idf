@@ -567,6 +567,7 @@ void init_m_bin(void)
 	uint8 i = 0, j = 0;
 	char buf[100], cubbyname[16];
 	float	f_wperadc = 0.93361;
+	float	f_wperadc_box = 0.5455468;
 	if(sd_card_det()==0) {
 	FILE *fd = NULL;
 	FILE *fd2 = NULL;
@@ -702,7 +703,7 @@ void init_m_bin(void)
 			m_bin.m_box[i].m_cup[j].u32_adc_raw = 0;
 			m_bin.m_box[i].m_cup[j].u8_led_status = 0;
 
-			sprintf(cubbyname, "CubbyR%dC%d", (i/2)+1, ((i%2)*4)+j+1);
+			sprintf(cubbyname, "Box%dCup%d", i+1, j+1);
 			/*
 			fd2 = fopen(cubbyname, "rt");
 			if(fd2 == NULL){
@@ -728,7 +729,7 @@ void init_m_bin(void)
 			if(hu_profile_getchar(cubbyname, "WeightPerADC", (char *)buf, fd) == 0){
 				m_bin.m_box[i].m_cup[j].f_wperadc = atof(buf);
 			} else {
-				m_bin.m_box[i].m_cup[j].f_wperadc = f_wperadc;
+				m_bin.m_box[i].m_cup[j].f_wperadc = f_wperadc_box;
 			}
 		}
 	}
@@ -961,6 +962,36 @@ uint32 api_get_box_weight(uint32 box_id, uint32 cup_index)
 	if(u8_box_index < BOX_CNT_MAX)
 	{
 		u32_ret = float2int(m_bin.m_box[box_id].m_cup[cup_index].f_weight);
+	}
+	return u32_ret;
+}
+
+uint32 api_get_box_adc_taring(uint32 box_id, uint32 cup_index)
+{
+	uint32 u32_ret = 0;
+	uint8 u8_box_index = 0;
+	if(cup_index > 23)
+		return 0;
+
+	u8_box_index = find_box_index(box_id);
+	if(u8_box_index < BOX_CNT_MAX)
+	{
+		u32_ret = m_bin.m_box[box_id].m_cup[cup_index].u32_adc_peeling;
+	}
+	return u32_ret;
+}
+
+uint32 api_get_box_adc_raw(uint32 box_id, uint32 cup_index)
+{
+	uint32 u32_ret = 0;
+	uint8 u8_box_index = 0;
+	if(cup_index > 23)
+		return 0;
+
+	u8_box_index = find_box_index(box_id);
+	if(u8_box_index < BOX_CNT_MAX)
+	{
+		u32_ret = m_bin.m_box[box_id].m_cup[cup_index].u32_adc_raw;
 	}
 	return u32_ret;
 }
