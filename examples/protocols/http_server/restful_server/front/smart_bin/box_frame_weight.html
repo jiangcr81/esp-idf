@@ -1,0 +1,152 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Weight Monitor</title>
+</head>
+<script>
+
+function get_cup_weight()
+{
+	var box_id = document.getElementById("box_id_set_input").value;
+	var cup_index = document.getElementById("hidden_id").value;
+	if (box_id.length > 0)
+	{
+		var xmlHttp;
+		try{
+			// Firefox, Opera 8.0+, Safari
+			xmlHttp=new XMLHttpRequest();
+		}
+		catch (e){
+			// Internet Explorer
+			var a = ['MSXML2.XMLHTTP.5.0','MSXML2.XMLHTTP.4.0','MSXML2.XMLHTTP.3.0','MSXML2.XMLHTTP','MICROSOFT.XMLHTTP.1.0','MICROSOFT.XMLHTTP.1','MICROSOFT.XMLHTTP'];
+			for (var i=0;i<a.length;i++){
+				try{
+					xmlhttp = new ActiveXObject(a[i]);
+					break;
+				}
+				catch (e){
+				//	alert("您的浏览器不支持AJAX！");
+					return false;
+				}
+			}
+		}
+		
+		xmlHttp.onreadystatechange=function(){
+			if(xmlHttp.readyState==4){
+				if(xmlHttp.responseText != "")
+				{
+					document.getElementById("div_cup_"+cup_index).innerHTML = xmlHttp.responseText;
+				}
+			}
+		}
+	//	alert("box/get_weight?box_id="+box_id+"&cup_index="+cup_index+"&ramdom="+Math.random());
+		xmlHttp.open("get", "box/get_weight?box_id="+box_id+"&cup_index="+cup_index+"&ramdom="+Math.random(), true);
+		xmlHttp.send(null);
+		
+		cup_index++;
+		if(cup_index > 24) cup_index=0;
+		document.getElementById("hidden_id").value = cup_index;
+	}
+	
+	setTimeout('get_cup_weight()', 1000);
+}
+
+function box_taring()
+{
+	var param = "box_taring_all=true";
+	var xhttp = new XMLHttpRequest();
+	xhttp.onreadystatechange = function() {
+		if (xhttp.readyState == 4) {
+			if (xhttp.status == 200) {
+				document.open();
+				document.write(xhttp.responseText);
+				document.close();
+			} else if (xhttp.status == 0) {
+				alert("Server closed the connection abruptly!");
+				location.reload()
+			} else {
+				alert(xhttp.status + " Error!\n" + xhttp.responseText);
+				location.reload()
+			}
+		}
+	}
+	
+	xhttp.open("POST", "wifi/set_param", true);
+	xhttp.send(param);
+
+}
+</script>
+<body onload="get_cup_weight();">
+<table width="100%" border="0">
+  <tr>
+    <td width="10%">
+  <label>Box ID:
+  <input type="text" id="box_id_set_input" size="4" maxlength="4" value="0"/>
+  </label>
+    </td>
+    <td width="90%"><p><button id="box_taring" type="button" onclick="box_taring()">Taring All</button></p></td>
+  </tr>
+</table>
+
+<table width="100%" border="1">
+  <tr>
+    <td>1<br /><div id="div_cup_23" ></div>
+    </td>
+    <td>2<br /><div id="div_cup_22" ></div>
+	</td>
+	<td>3<br /><div id="div_cup_19" ></div>
+	</td>
+	<td>4<br /><div id="div_cup_18" ></div>
+	</td>
+	<td>5<br /><div id="div_cup_15" ></div>
+	</td>
+	<td>6<br /><div id="div_cup_14" ></div>
+	</td>
+  </tr>
+  <tr>
+    <td>7<br /><div id="div_cup_21" ></div>
+    </td>
+    <td>8<br /><div id="div_cup_24" ></div>
+	</td>
+	<td>9<br /><div id="div_cup_17" ></div>
+	</td>
+	<td>10<br /><div id="div_cup_20" ></div>
+	</td>
+	<td>11<br /><div id="div_cup_13" ></div>
+	</td>
+	<td>12<br /><div id="div_cup_16" ></div>
+	</td>
+  </tr>
+  <tr>
+    <td>13<br /><div id="div_cup_4" ></div>
+    </td>
+    <td>14<br /><div id="div_cup_1" ></div>
+	</td>
+	<td>15<br /><div id="div_cup_8" ></div>
+	</td>
+	<td>16<br /><div id="div_cup_5" ></div>
+	</td>
+	<td>17<br /><div id="div_cup_12" ></div>
+	</td>
+	<td>18<br /><div id="div_cup_9" ></div>
+	</td>
+  </tr>
+  <tr>
+    <td>19<br /><div id="div_cup_2" ></div>
+    </td>
+    <td>20<br /><div id="div_cup_3" ></div>
+	</td>
+	<td>21<br /><div id="div_cup_6" ></div>
+	</td>
+	<td>22<br /><div id="div_cup_7" ></div>
+	</td>
+	<td>23<br /><div id="div_cup_10" ></div>
+	</td>
+	<td>24<br /><div id="div_cup_11" ></div>
+	</td>
+  </tr>
+</table>
+<div style="visibility:hidden"><input id="hidden_id" name="hidden_id" value="0"/></div>
+</body>
+</html>
